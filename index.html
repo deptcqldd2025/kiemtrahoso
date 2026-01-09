@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đội QLDD - Kiểm tra hồ sơ v1.1</title>
+    <title>Đội QLDD - Kiểm tra hồ sơ v1.2</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -79,7 +79,7 @@
                     </button>
                     <div class="collapse p-3 bg-light text-muted small" id="authorCollapse">
                         <strong>Phát triển bởi:</strong> Đội QLDD<br>
-                        <strong>Phiên bản:</strong> 1.1<br>
+                        <strong>Phiên bản:</strong> 1.2<br>
                         <strong>Liên hệ:</strong> deptc.gvatvsld@gmail.com
                     </div>
                 </div>
@@ -88,7 +88,7 @@
 
         <div class="app-header">
             <button class="menu-btn" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i class="fas fa-bars"></i></button>
-            <h6 class="m-0 fw-bold">Đội QLDD - Kiểm tra hồ sơ v1.1</h6>
+            <h6 class="m-0 fw-bold">Đội QLDD - Kiểm tra hồ sơ v1.2</h6>
             <div style="width: 24px;"></div>
         </div>
 
@@ -186,9 +186,10 @@
         const db = firebase.database();
         const auth = firebase.auth();
 
+        // [QUAN TRỌNG] DÁN LINK SCRIPT MỚI CỦA BẠN VÀO ĐÂY SAU KHI DEPLOY LẠI
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzkobBHYC86WLwPgU3nXVxXLXkxxUt3fvmsPMof8-Tww_jN3FdsELmnS2p-f0ipnqif/exec'; 
         
-        // ADMIN EMAIL MỚI
+        // ADMIN EMAIL
         const ADMIN_EMAIL = 'deptc.gvatvsld@gmail.com';
 
         // 2. AUTH LOGIC
@@ -288,7 +289,6 @@
             currentLineId = lineId;
             document.getElementById('mobileLineSelect').value = lineId;
             renderMobileList(allLinesData[lineId]);
-            // Chuyển về Mobile View
             document.getElementById('view-dashboard').classList.add('d-none');
             document.getElementById('view-mobile').classList.remove('d-none');
             isMobile = true;
@@ -440,6 +440,7 @@
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = (e) => {
+                // Client đã split header, gửi mã sạch lên
                 sendToScript(e.target.result.split(',')[1], file.type, file.name);
                 document.getElementById(inputId).value = '';
             };
@@ -480,7 +481,6 @@
                 tN += PER_LINE; tD += d;
                 const pct = Math.round((d/PER_LINE)*100);
                 
-                // Logic Admin xóa
                 let deleteBtn = '';
                 if(currentUser && currentUser.email === ADMIN_EMAIL) {
                     deleteBtn = `<button class="btn btn-sm btn-danger ms-1" onclick="handleDeleteLine('${id}')"><i class="fas fa-trash"></i></button>`;
