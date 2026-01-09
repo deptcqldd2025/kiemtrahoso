@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đội QLDD - Kiểm tra hồ sơ v1.5</title>
+    <title>Đội QLDD - Kiểm tra hồ sơ v1.6</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -20,16 +20,16 @@
         .record-card { border: none; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; overflow: hidden; }
         .record-header { background: #e9ecef; padding: 10px 15px; font-weight: bold; color: #495057; display: flex; justify-content: space-between; align-items: center; }
         
-        .file-item { border-bottom: 1px solid #eee; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; font-size: 14px; background: white; }
-        .file-note { flex-grow: 1; font-weight: 500; margin-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .legacy-tag { font-size: 10px; background: #ffc107; padding: 2px 5px; border-radius: 4px; margin-right: 5px; color: #000; }
+        .file-item { border-bottom: 1px solid #eee; padding: 8px 10px; font-size: 14px; background: white; }
+        .file-meta { font-size: 11px; color: #6c757d; display: block; margin-top: 2px; }
+        .file-note { font-weight: 500; color: #0d6efd; }
+        .locked-tag { color: #dc3545; font-weight: bold; margin-left: 10px; font-size: 12px; display: none; }
+        .is-locked .locked-tag { display: inline; }
         
         .action-bar { padding: 10px; background: #fff; border-top: 1px solid #dee2e6; }
-        
-        /* Status Badges */
-        .status-no-record { background: #f8d7da; color: #842029; padding: 5px 10px; font-size: 13px; text-align: center; border-bottom: 1px solid #f5c2c7; }
+        .status-no-record { background: #f8d7da; color: #842029; padding: 5px 10px; font-size: 13px; border-bottom: 1px solid #f5c2c7; }
 
-        /* Scanner */
+        /* Scanner & Modals */
         #scannerModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 9999; display: none; overflow-y: auto; }
         .scanner-header { background: #212529; color: white; padding: 15px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
         .scan-preview-item { position: relative; display: inline-block; margin: 5px; border: 2px solid #ddd; background: white; }
@@ -62,16 +62,21 @@
                     <div class="small text-muted" id="menuUserEmail">...</div>
                     <button class="btn btn-sm btn-outline-danger mt-2" onclick="handleLogout()">Đăng xuất</button>
                 </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item"><strong>Phiên bản:</strong> 1.5 (Fix Data & Add No Record)</li>
-                    <li class="list-group-item"><strong>Admin:</strong> deptc.gvatvsld@gmail.com</li>
-                </ul>
+                <div class="list-group list-group-flush">
+                    <button class="list-group-item list-group-item-action" onclick="alert('Phiên bản 1.6 - Quản lý & Bảo mật')">Thông tin Phiên bản</button>
+                    <button id="btnUserManager" class="list-group-item list-group-item-action d-none text-primary fw-bold" onclick="openUserManager()">
+                        <i class="fas fa-users-cog"></i> Quản lý Nhân sự
+                    </button>
+                </div>
             </div>
         </div>
 
         <div class="app-header">
             <button class="menu-btn" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i class="fas fa-bars"></i></button>
-            <h6 class="m-0 fw-bold">Kiểm tra hồ sơ v1.5</h6>
+            <h6 class="m-0 fw-bold">
+                Kiểm tra hồ sơ v1.6 
+                <span id="headerLockStatus" class="locked-tag"><i class="fas fa-lock"></i> ĐÃ KHÓA</span>
+            </h6>
             <div style="width: 24px;"></div>
         </div>
         <button class="fab-switch" onclick="toggleView()"><i class="fas fa-sync"></i> View</button>
@@ -83,8 +88,15 @@
                         <select id="mobileLineSelect" class="form-select" onchange="handleLineChange()">
                             <option value="">-- Chọn tuyến --</option>
                         </select>
-                        <button class="btn btn-success" onclick="openCreateModal()"><i class="fas fa-plus"></i></button>
-                        <button id="btnDeleteLine" class="btn btn-danger d-none" onclick="handleDeleteLine()"><i class="fas fa-trash"></i></button>
+                        <button id="btnAddLine" class="btn btn-success" onclick="openCreateModal()"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div id="adminControls" class="mt-2 d-none d-flex justify-content-end gap-2">
+                        <button id="btnLockLine" class="btn btn-sm btn-warning" onclick="toggleLockLine()">
+                            <i class="fas fa-lock"></i> Khóa/Mở
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="handleDeleteLine()">
+                            <i class="fas fa-trash"></i> Xóa Tuyến
+                        </button>
                     </div>
                 </div>
             </div>
@@ -109,7 +121,7 @@
         </div>
         <div class="container mt-3 text-center">
             <div id="scanPreviewContainer"></div>
-            <div id="scanEmptyState" class="text-muted mt-5"><i class="fas fa-camera fa-3x mb-3"></i><br>Chụp trang đầu tiên</div>
+            <div id="scanEmptyState" class="text-muted mt-5"><i class="fas fa-camera fa-3x mb-3"></i><br>Chụp ảnh</div>
         </div>
         <label for="cameraInput" class="btn-camera-float"><i class="fas fa-camera"></i></label>
         <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden onchange="handleScanCapture(this)">
@@ -125,6 +137,22 @@
                 <div class="modal-header"><h5 class="modal-title">Thêm Tuyến</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body"><input type="text" id="newLineName" class="form-control" placeholder="Tên tuyến..."></div>
                 <div class="modal-footer"><button class="btn btn-primary" onclick="handleCreateLine()">Tạo</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="userModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Quản lý Nhân sự</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="input-group mb-3">
+                        <input type="text" id="userEmailInput" class="form-control" placeholder="Email (gmail)">
+                        <input type="text" id="userNameInput" class="form-control" placeholder="Tên thật">
+                        <button class="btn btn-primary" onclick="saveUserMapping()">Lưu</button>
+                    </div>
+                    <div id="userList" class="list-group small"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -152,13 +180,15 @@
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzkobBHYC86WLwPgU3nXVxXLXkxxUt3fvmsPMof8-Tww_jN3FdsELmnS2p-f0ipnqif/exec'; 
         const ADMIN_EMAIL = 'deptc.gvatvsld@gmail.com';
 
-        // --- 2. LOGIC ---
+        // --- 2. GLOBAL STATE ---
         let currentUser = null;
         let currentLineId = '';
         let allLinesData = {};
+        let userMappings = {}; // Cache tên thật
         let capturedPages = [];
         let scanContext = {}; 
 
+        // --- 3. AUTH & INIT ---
         auth.onAuthStateChanged((user) => {
             if (user) {
                 currentUser = user;
@@ -167,11 +197,9 @@
                 document.getElementById('menuUserName').innerText = user.displayName;
                 document.getElementById('menuUserEmail').innerText = user.email;
                 document.getElementById('menuUserAvatar').src = user.photoURL;
-                checkAdmin();
-                db.ref('lines').on('value', snap => {
-                    allLinesData = snap.val() || {};
-                    renderUI();
-                });
+                
+                checkAdminUI();
+                initDataListeners();
             } else {
                 currentUser = null;
                 document.getElementById('loginScreen').classList.remove('d-none');
@@ -181,207 +209,232 @@
 
         function handleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
         function handleLogout() { auth.signOut().then(() => location.reload()); }
-        function checkAdmin() { 
-            const btn = document.getElementById('btnDeleteLine');
-            if(currentUser?.email === ADMIN_EMAIL) btn.classList.remove('d-none');
-            else btn.classList.add('d-none');
+        
+        function checkAdminUI() { 
+            const isAdmin = (currentUser?.email === ADMIN_EMAIL);
+            if(isAdmin) {
+                document.getElementById('btnUserManager').classList.remove('d-none');
+                document.getElementById('adminControls').classList.remove('d-none');
+                document.getElementById('adminControls').classList.add('d-flex');
+            }
         }
 
-        // --- 3. CORE FUNCTIONS ---
-        function renderUI() {
-            renderLineSelect();
-            renderDashboard();
-            if (currentLineId && allLinesData[currentLineId]) {
-                renderMobileList(allLinesData[currentLineId]);
-            } else {
-                document.getElementById('mobileRecordList').innerHTML = '<div class="text-center mt-5 text-muted">Vui lòng chọn tuyến dây</div>';
+        function initDataListeners() {
+            // Load danh sách người dùng để map tên
+            db.ref('users').on('value', snap => {
+                userMappings = snap.val() || {};
+            });
+
+            // Load dữ liệu Tuyến
+            db.ref('lines').on('value', snap => {
+                allLinesData = snap.val() || {};
+                
+                // Cập nhật Select Box ngay lập tức
+                renderLineSelect();
+                renderDashboard();
+                
+                // Nếu đang ở 1 tuyến, vẽ lại nội dung
+                if (currentLineId && allLinesData[currentLineId]) {
+                    renderMobileList(allLinesData[currentLineId]);
+                } else if (!currentLineId) {
+                    // Nếu chưa chọn, thử auto chọn cái đầu tiên hoặc để trống
+                    document.getElementById('mobileRecordList').innerHTML = '<div class="text-center mt-5 text-muted">Vui lòng chọn tuyến dây</div>';
+                }
+            });
+        }
+
+        // --- 4. LINE LOGIC ---
+        function renderLineSelect() {
+            const s = document.getElementById('mobileLineSelect');
+            const currentVal = s.value || currentLineId; // Lưu giá trị hiện tại
+            
+            s.innerHTML = '<option value="">-- Chọn tuyến --</option>';
+            // Sort theo thời gian tạo mới nhất
+            const sortedKeys = Object.keys(allLinesData).sort((a,b) => {
+                const tA = allLinesData[a].created_at || '';
+                const tB = allLinesData[b].created_at || '';
+                return tB.localeCompare(tA);
+            });
+
+            sortedKeys.forEach(id => {
+                s.innerHTML += `<option value="${id}">${allLinesData[id].name}</option>`;
+            });
+
+            if (currentVal && allLinesData[currentVal]) {
+                s.value = currentVal;
             }
         }
 
         function handleLineChange() {
             currentLineId = document.getElementById('mobileLineSelect').value;
-            renderUI();
+            if(currentLineId && allLinesData[currentLineId]) {
+                renderMobileList(allLinesData[currentLineId]);
+            } else {
+                document.getElementById('mobileRecordList').innerHTML = '';
+            }
         }
 
-        function openCreateModal() {
-            // [FIXED] Dùng cách gọi Modal an toàn hơn
-            var myModal = new bootstrap.Modal(document.getElementById('createLineModal'));
-            myModal.show();
-        }
+        function openCreateModal() { new bootstrap.Modal(document.getElementById('createLineModal')).show(); }
 
         function handleCreateLine() {
             const name = document.getElementById('newLineName').value;
             if(!name.trim()) return;
             const newId = 'line_' + Date.now();
             db.ref('lines/' + newId).set({ 
-                name: name, created_at: new Date().toISOString(), created_by: currentUser.email
+                name: name, created_at: new Date().toISOString(), created_by: currentUser.email, is_locked: false
             }).then(() => {
-                // Hide modal manual
-                const modalEl = document.getElementById('createLineModal');
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                modal.hide();
-                
+                bootstrap.Modal.getInstance(document.getElementById('createLineModal')).hide();
                 document.getElementById('newLineName').value = '';
+                // Set current ID ngay sau khi tạo
                 currentLineId = newId;
-                setTimeout(() => { document.getElementById('mobileLineSelect').value = newId; }, 500);
+                // Đợi 1 xíu để Firebase sync về
+                setTimeout(() => { 
+                    document.getElementById('mobileLineSelect').value = newId;
+                    renderMobileList({name: name, records: {}});
+                }, 300);
             });
         }
 
-        function handleDeleteLine(lineId = null) {
-            const id = lineId || currentLineId;
-            if(!id) return;
-            if (currentUser.email !== ADMIN_EMAIL) return alert("Không đủ quyền!");
-            if(confirm("Xóa vĩnh viễn tuyến này?")) {
-                db.ref('lines/' + id).remove().then(() => { 
-                    alert("Đã xóa"); 
-                    if(id == currentLineId) currentLineId = ''; 
-                });
-            }
-        }
-        
-        function deleteFile(lineId, docId, fileId) {
-            if (currentUser.email !== ADMIN_EMAIL) return alert("Chỉ Admin mới được xóa file!");
-            if(confirm("Xóa file này khỏi danh sách?")) {
-                db.ref(`lines/${lineId}/records/${docId}/files/${fileId}`).remove();
+        function toggleLockLine() {
+            if (!currentLineId) return;
+            const isLocked = allLinesData[currentLineId].is_locked;
+            if(confirm(isLocked ? "MỞ KHÓA tuyến này?" : "KHÓA tuyến này? (Không ai sửa được nữa)")) {
+                db.ref('lines/' + currentLineId).update({ is_locked: !isLocked });
             }
         }
 
-        function toggleNoRecord(docId) {
-            // Logic: Nếu chưa có xác nhận -> Ghi xác nhận. Nếu có rồi -> Hỏi xóa.
-            const rec = (allLinesData[currentLineId].records || {})[docId] || {};
-            if(rec.no_record) {
-                if(confirm("Hủy trạng thái 'Không có hồ sơ'?")) {
-                    db.ref(`lines/${currentLineId}/records/${docId}/no_record`).remove();
-                    db.ref(`lines/${currentLineId}/records/${docId}/no_record_by`).remove();
-                }
-            } else {
-                if(confirm("Xác nhận hạng mục này ĐÃ KIỂM TRA nhưng KHÔNG CÓ HỒ SƠ?")) {
-                     db.ref(`lines/${currentLineId}/records/${docId}`).update({
-                         no_record: true,
-                         no_record_by: currentUser.email + " lúc " + new Date().toLocaleString()
-                     });
-                }
+        function handleDeleteLine() {
+            if(!currentLineId) return;
+            if(confirm("XÓA VĨNH VIỄN tuyến này?")) {
+                db.ref('lines/' + currentLineId).remove().then(() => currentLineId = '');
             }
         }
 
-        // --- 4. RENDER LIST ---
+        // --- 5. RENDER CONTENT ---
         const DOC_CATEGORIES = {
-            TECHNICAL: [
-                { id: 'phap_ly', name: 'Pháp lý & Thiết kế' },
-                { id: 'nghiem_thu_ngam', name: 'NT Phần ngầm' },
-                { id: 'nghiem_thu_noi', name: 'NT Phần nổi' },
-                { id: 'tiep_dia', name: 'Tiếp địa' },
-                { id: 'tai_lieu_sx', name: 'Tài liệu NSX' },
-                { id: 'ban_ve_hoan_cong', name: 'Bản vẽ hoàn công' },
-                { id: 'dong_dien', name: 'Đóng điện' }
-            ],
-            OPERATIONAL: [
-                { id: 'nhiem_vu', name: 'Giao nhiệm vụ' },
-                { id: 'ly_lich', name: 'Lý lịch đường dây' },
-                { id: 'nhat_ky', name: 'Nhật ký vận hành' },
-                { id: 'kiem_tra_dinh_ky', name: 'Kiểm tra định kỳ' },
-                { id: 'vat_tu', name: 'Vật tư dự phòng' }
-            ],
-            ELECTRONIC: [ // [NEW] Mục 3
-                { id: 'du_lieu_do_xa', name: 'Dữ liệu đo xa (RF/DSP)' },
-                { id: 'cau_hinh_thiet_bi', name: 'File cấu hình thiết bị' },
-                { id: 'hinh_anh_hien_truong', name: 'Hình ảnh hiện trường' }
-            ]
+            TECHNICAL: [ { id: 'phap_ly', name: 'Pháp lý & Thiết kế' }, { id: 'nghiem_thu_ngam', name: 'NT Phần ngầm' }, { id: 'nghiem_thu_noi', name: 'NT Phần nổi' }, { id: 'tiep_dia', name: 'Tiếp địa' }, { id: 'tai_lieu_sx', name: 'Tài liệu NSX' }, { id: 'ban_ve_hoan_cong', name: 'Bản vẽ hoàn công' }, { id: 'dong_dien', name: 'Đóng điện' } ],
+            OPERATIONAL: [ { id: 'nhiem_vu', name: 'Giao nhiệm vụ' }, { id: 'ly_lich', name: 'Lý lịch đường dây' }, { id: 'nhat_ky', name: 'Nhật ký vận hành' }, { id: 'kiem_tra_dinh_ky', name: 'Kiểm tra định kỳ' }, { id: 'vat_tu', name: 'Vật tư dự phòng' } ],
+            ELECTRONIC: [ { id: 'du_lieu_do_xa', name: 'Dữ liệu đo xa' }, { id: 'cau_hinh_thiet_bi', name: 'Cấu hình thiết bị' }, { id: 'hinh_anh_hien_truong', name: 'Hình ảnh hiện trường' } ]
         };
+
+        function getRealName(email) {
+            if(!email) return 'Ẩn danh';
+            const safeKey = email.replace(/\./g, '_');
+            return (userMappings[safeKey] && userMappings[safeKey].name) ? userMappings[safeKey].name : email;
+        }
 
         function renderMobileList(lineData) {
             const container = document.getElementById('mobileRecordList');
-            let html = '';
+            const isLocked = lineData.is_locked === true;
+            const isAdmin = currentUser.email === ADMIN_EMAIL;
             
+            // Update Header Status
+            const headerLock = document.getElementById('headerLockStatus');
+            if(isLocked) { headerLock.style.display = 'inline'; document.body.classList.add('is-locked'); }
+            else { headerLock.style.display = 'none'; document.body.classList.remove('is-locked'); }
+
+            // Disable controls if locked (unless Admin wants to view)
+            const disableAction = isLocked ? 'disabled' : '';
+
+            let html = '';
             const renderGroup = (title, items) => {
                 let h = `<h6 class="text-uppercase fw-bold text-muted mt-4 ps-2 border-start border-4 border-primary">${title}</h6>`;
                 items.forEach(i => {
                     const rec = (lineData.records && lineData.records[i.id]) ? lineData.records[i.id] : {};
                     const files = rec.files || {};
-                    const fileKeys = Object.keys(files);
                     
-                    // [FIX] Xử lý dữ liệu cũ (Legacy v1.3)
-                    if (rec.link && !rec.files) {
-                         // Giả lập nó thành 1 file trong danh sách
-                         files['legacy'] = { link: rec.link, note: 'Hồ sơ cũ (v1.3)', user: 'System' };
-                         fileKeys.push('legacy');
-                    }
-
-                    const hasFile = fileKeys.length > 0;
+                    // Support Legacy Data v1.3
+                    if (rec.link && !rec.files) files['legacy'] = { link: rec.link, note: 'Hồ sơ cũ', user: rec.updated_by || 'System' };
+                    
+                    const hasFile = Object.keys(files).length > 0;
                     const isNoRecord = rec.no_record === true;
                     
-                    let statusIcon = 'fa-circle text-secondary';
-                    if(hasFile) statusIcon = 'fa-check-circle text-success';
-                    if(isNoRecord) statusIcon = 'fa-ban text-danger';
+                    let icon = 'fa-circle text-secondary';
+                    if(hasFile) icon = 'fa-check-circle text-success';
+                    if(isNoRecord) icon = 'fa-ban text-danger';
 
-                    const badgeCount = hasFile ? `<span class="badge bg-secondary rounded-pill ms-2">${fileKeys.length}</span>` : '';
-
-                    h += `
-                    <div class="card record-card">
-                        <div class="record-header">
-                            <span><i class="fas ${statusIcon} me-2"></i>${i.name} ${badgeCount}</span>
-                        </div>`;
+                    h += `<div class="card record-card">
+                        <div class="record-header"><span><i class="fas ${icon} me-2"></i>${i.name}</span></div>`;
                     
-                    // STATUS BAR: KHÔNG CÓ HỒ SƠ
                     if(isNoRecord) {
-                        h += `<div class="status-no-record">
-                                <i class="fas fa-exclamation-triangle"></i> ${rec.no_record_by}
-                              </div>`;
+                        h += `<div class="status-no-record"><i class="fas fa-user-check"></i> Đã kiểm tra (Không có HS) - ${getRealName(rec.no_record_user)}</div>`;
                     }
 
                     // FILE LIST
                     h += `<div class="bg-white">`;
-                    if (hasFile) {
-                        for (const [fId, fData] of Object.entries(files)) {
-                            const delBtn = (currentUser.email === ADMIN_EMAIL) ? 
-                                `<button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteFile('${currentLineId}', '${i.id}', '${fId}')"><i class="fas fa-times"></i></button>` : '';
-                            const legacyTag = (fId === 'legacy') ? '<span class="legacy-tag">OLD</span>' : '';
-                            
-                            h += `
-                            <div class="file-item">
-                                <span class="file-note">${legacyTag}<i class="fas fa-file-alt text-primary small me-1"></i> ${fData.note || 'Tài liệu'}</span>
-                                <div class="d-flex">
-                                    <a href="${fData.link}" target="_blank" class="btn btn-sm btn-outline-primary me-1"><i class="fas fa-eye"></i> Xem</a>
-                                    ${delBtn}
-                                </div>
-                            </div>`;
+                    for (const [fId, fData] of Object.entries(files)) {
+                        // Logic Xóa: Admin xóa hết, User chỉ xóa của mình. Nếu Locked thì ẩn hết.
+                        let allowDelete = false;
+                        if (!isLocked) {
+                            if (isAdmin) allowDelete = true;
+                            else if (fData.user === currentUser.email) allowDelete = true;
                         }
-                    } else if (!isNoRecord) {
-                        h += `<div class="p-2 text-center text-muted small fst-italic">Chưa có tài liệu</div>`;
-                    }
-                    h += `</div>
+                        const delBtn = allowDelete ? `<button class="btn btn-sm text-danger ms-2" onclick="deleteFile('${currentLineId}','${i.id}','${fId}')"><i class="fas fa-times"></i></button>` : '';
                         
-                        <div class="action-bar d-flex gap-2">
-                            <button class="btn btn-sm ${isNoRecord ? 'btn-danger' : 'btn-outline-secondary'}" onclick="toggleNoRecord('${i.id}')" title="Xác nhận không có hồ sơ">
-                                ${isNoRecord ? '<i class="fas fa-undo"></i>' : 'Không có HS'}
-                            </button>
+                        h += `<div class="file-item">
+                            <div>
+                                <div class="file-note"><a href="${fData.link}" target="_blank" class="text-decoration-none">${fData.note || 'Tài liệu'}</a></div>
+                                <span class="file-meta"><i class="fas fa-user"></i> ${getRealName(fData.user)} | ${new Date(fData.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <div>
+                                <a href="${fData.link}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a>
+                                ${delBtn}
+                            </div>
+                        </div>`;
+                    }
+                    h += `</div>`;
 
+                    // ACTION BAR
+                    if (!isLocked || isAdmin) { // Admin có thể thấy control kể cả khi lock, nhưng ở đây ta ẩn luôn cho gọn
+                         h += `<div class="action-bar d-flex gap-2" ${isLocked ? 'style="display:none!important"' : ''}>
+                            <button class="btn btn-sm ${isNoRecord ? 'btn-danger' : 'btn-outline-secondary'}" onclick="toggleNoRecord('${i.id}')">
+                                ${isNoRecord ? 'Hủy' : '0 HS'}
+                            </button>
                             <input type="text" id="note_${i.id}" class="form-control form-control-sm" placeholder="Ghi chú..." ${isNoRecord ? 'disabled' : ''}>
-                            
                             <div class="btn-group">
                                 <button class="btn btn-sm btn-warning text-white" onclick="prepareScan('${i.id}')" ${isNoRecord ? 'disabled' : ''}><i class="fas fa-camera"></i></button>
-                                <div class="btn btn-sm btn-secondary position-relative" title="Upload">
+                                <div class="btn btn-sm btn-secondary position-relative">
                                     <i class="fas fa-upload"></i>
                                     <input type="file" onchange="handleUpload(this, '${i.id}')" ${isNoRecord ? 'disabled' : ''} style="position:absolute;left:0;top:0;opacity:0;width:100%;height:100%">
                                 </div>
                             </div>
-                        </div>
-                    </div>`;
+                        </div>`;
+                    }
+                    h += `</div>`;
                 });
                 return h;
             };
-
             html += renderGroup('1. Hồ sơ Kỹ thuật', DOC_CATEGORIES.TECHNICAL);
             html += renderGroup('2. Hồ sơ Vận hành', DOC_CATEGORIES.OPERATIONAL);
             html += renderGroup('3. Hồ sơ Điện tử', DOC_CATEGORIES.ELECTRONIC);
             container.innerHTML = html;
         }
 
-        // --- 5. UPLOAD & SCAN HANDLERS ---
+        // --- 6. FILE ACTIONS ---
+        function toggleNoRecord(docId) {
+            const rec = (allLinesData[currentLineId].records || {})[docId] || {};
+            if(rec.no_record) {
+                if(confirm("Hủy trạng thái này?")) {
+                    db.ref(`lines/${currentLineId}/records/${docId}/no_record`).remove();
+                    db.ref(`lines/${currentLineId}/records/${docId}/no_record_user`).remove();
+                }
+            } else {
+                if(confirm("Xác nhận KHÔNG CÓ HỒ SƠ?")) {
+                     db.ref(`lines/${currentLineId}/records/${docId}`).update({
+                         no_record: true, no_record_user: currentUser.email
+                     });
+                }
+            }
+        }
+
+        function deleteFile(lId, dId, fId) {
+            if(confirm("Xóa file này?")) db.ref(`lines/${lId}/records/${dId}/files/${fId}`).remove();
+        }
+
         function prepareScan(docId) {
             const note = document.getElementById(`note_${docId}`).value;
-            if (!note.trim()) return alert("Nhập ghi chú trước khi Scan!");
-            scanContext = { lineId: currentLineId, docId: docId, note: note.trim() };
+            if (!note.trim()) return alert("Nhập ghi chú!");
+            scanContext = { lineId: currentLineId, docId, note: note.trim() };
             capturedPages = [];
             document.getElementById('scanPreviewContainer').innerHTML = '';
             document.getElementById('scanEmptyState').style.display = 'block';
@@ -392,21 +445,45 @@
             const file = input.files[0];
             if(!file) return;
             const note = document.getElementById(`note_${docId}`).value;
-            if (!note.trim()) { input.value = ''; return alert("Nhập ghi chú trước khi Upload!"); }
-
+            if (!note.trim()) { input.value = ''; return alert("Nhập ghi chú!"); }
+            
             document.getElementById('loadingOverlay').style.display = 'block';
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = (e) => {
                 const base64 = e.target.result.split(',')[1];
-                const fileName = `${currentLineId}_${docId}_${file.name}`;
-                sendToScript(base64, file.type, fileName, note, docId);
+                const fname = `${currentLineId}_${docId}_${file.name}`;
+                sendToScript(base64, file.type, fname, note, docId);
                 input.value = '';
             };
         }
 
+        // --- 7. USER MANAGEMENT (ADMIN ONLY) ---
+        function openUserManager() {
+            new bootstrap.Modal(document.getElementById('userModal')).show();
+            renderUserList();
+        }
+        function saveUserMapping() {
+            const email = document.getElementById('userEmailInput').value.trim();
+            const name = document.getElementById('userNameInput').value.trim();
+            if(!email || !name) return alert("Nhập đủ thông tin!");
+            const safeKey = email.replace(/\./g, '_');
+            db.ref('users/' + safeKey).set({ name: name, email: email });
+            alert("Đã lưu!");
+            renderUserList();
+        }
+        function renderUserList() {
+            const list = document.getElementById('userList');
+            list.innerHTML = '';
+            Object.values(userMappings).forEach(u => {
+                list.innerHTML += `<div class="list-group-item d-flex justify-content-between">
+                    <span><b>${u.name}</b> (${u.email})</span>
+                </div>`;
+            });
+        }
+
+        // --- 8. SCANNER ENGINE ---
         function closeScanner() { document.getElementById('scannerModal').style.display = 'none'; }
-        
         async function handleScanCapture(input) {
             if(input.files[0]) {
                 const img = await compressImage(input.files[0]);
@@ -415,9 +492,8 @@
                 input.value = '';
             }
         }
-        
         function compressImage(file) {
-            return new Promise((res) => {
+            return new Promise(res => {
                 const r = new FileReader(); r.readAsDataURL(file);
                 r.onload = e => {
                     const i = new Image(); i.src = e.target.result;
@@ -430,7 +506,6 @@
                 }
             });
         }
-        
         function renderScanPreview() {
             const c = document.getElementById('scanPreviewContainer');
             c.innerHTML = '';
@@ -439,94 +514,65 @@
                 c.innerHTML += `<div class="scan-preview-item"><img src="${img}" class="scan-thumb"><div class="btn-remove-page" onclick="capturedPages.splice(${idx},1);renderScanPreview()">X</div></div>`;
             });
         }
-
         function finishScanAndUpload() {
             if(!capturedPages.length) return alert("Chưa có ảnh!");
             document.getElementById('loadingOverlay').style.display = 'block';
             setTimeout(() => {
-                try {
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF('p', 'mm', 'a4');
-                    const pw = doc.internal.pageSize.getWidth();
-                    capturedPages.forEach((img, i) => {
-                        if(i>0) doc.addPage();
-                        const p = doc.getImageProperties(img);
-                        doc.addImage(img, 'JPEG', 10, 10, pw-20, (p.height*(pw-20))/p.width);
-                    });
-                    const b64 = doc.output('datauristring').split(',')[1];
-                    sendToScript(b64, 'application/pdf', `SCAN_${Date.now()}.pdf`, scanContext.note, scanContext.docId);
-                } catch(e) { alert("Lỗi: "+e); document.getElementById('loadingOverlay').style.display='none'; }
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p','mm','a4');
+                const pw = doc.internal.pageSize.getWidth();
+                capturedPages.forEach((img, i) => {
+                    if(i>0) doc.addPage();
+                    const p = doc.getImageProperties(img);
+                    doc.addImage(img,'JPEG',10,10,pw-20,(p.height*(pw-20))/p.width);
+                });
+                sendToScript(doc.output('datauristring').split(',')[1], 'application/pdf', `SCAN_${Date.now()}.pdf`, scanContext.note, scanContext.docId);
             }, 100);
         }
-
-        function sendToScript(base64, mimeType, fileName, note, docId) {
-            const payload = { base64, mimeType, filename: fileName };
-            fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
+        function sendToScript(b64, type, name, note, id) {
+            fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ base64: b64, mimeType: type, filename: name }) })
             .then(r => r.json())
             .then(d => {
                 if(d.status === 'success') {
-                    db.ref(`lines/${currentLineId}/records/${docId}/files`).push({
+                    db.ref(`lines/${currentLineId}/records/${id}/files`).push({
                         link: d.url, note: note, created_at: new Date().toISOString(), user: currentUser.email
                     });
                     alert("Thành công!");
-                    document.getElementById('scannerModal').style.display = 'none';
-                    const noteInput = document.getElementById(`note_${docId}`);
-                    if(noteInput) noteInput.value = '';
-                } else alert("Lỗi Script: " + d.message);
+                    closeScanner();
+                    document.getElementById(`note_${id}`).value = '';
+                } else alert("Lỗi: " + d.message);
             })
             .catch(e => alert("Lỗi mạng: "+e))
             .finally(() => document.getElementById('loadingOverlay').style.display='none');
         }
 
-        // --- 6. DASHBOARD & HELPERS ---
-        function renderLineSelect(lines) {
-            const s = document.getElementById('mobileLineSelect');
-            const saved = s.value || currentLineId;
-            s.innerHTML = '<option value="">-- Chọn tuyến --</option>';
-            for(const [id, l] of Object.entries(lines)) s.innerHTML += `<option value="${id}">${l.name}</option>`;
-            if(saved && lines[saved]) s.value = saved;
-        }
-
-        function renderDashboard(lines) {
+        // --- 9. HELPERS ---
+        function renderDashboard() {
             const tb = document.getElementById('dashboardTableBody');
-            if(!lines) return;
             tb.innerHTML = '';
             let tL=0, tF=0;
-            
-            Object.entries(lines).forEach(([id, l]) => {
+            Object.entries(allLinesData).forEach(([id, l]) => {
                 tL++;
-                let doneCount = 0;
-                // Đếm số hạng mục ĐÃ HOÀN THÀNH (Có file hoặc đã xác nhận Không có)
+                let done=0;
                 if(l.records) {
                     Object.values(l.records).forEach(rec => {
-                        if ((rec.files && Object.keys(rec.files).length > 0) || rec.link || rec.no_record) {
-                            doneCount++;
-                        }
+                        if((rec.files && Object.keys(rec.files).length > 0) || rec.link || rec.no_record) done++;
                     });
                 }
-                tF += doneCount;
+                tF += done;
                 
-                const delBtn = (currentUser.email === ADMIN_EMAIL) ? 
-                    `<button class="btn btn-sm btn-danger" onclick="handleDeleteLine('${id}')"><i class="fas fa-trash"></i></button>` : '';
-                const viewBtn = `<button class="btn btn-sm btn-info text-white me-1" onclick="viewDetail('${id}')"><i class="fas fa-eye"></i></button>`;
-
-                tb.innerHTML += `<tr>
-                    <td>${l.name}</td>
-                    <td class="text-center"><span class="badge bg-success">${doneCount} mục xong</span></td>
-                    <td>${viewBtn} ${delBtn}</td>
-                </tr>`;
+                const deleteBtn = (currentUser.email === ADMIN_EMAIL) ? `<button class="btn btn-sm btn-danger ms-1" onclick="handleDeleteLine('${id}')"><i class="fas fa-trash"></i></button>` : '';
+                
+                tb.innerHTML += `<tr><td>${l.name}</td><td><span class="badge bg-success">${done} mục</span></td><td><button class="btn btn-sm btn-info text-white" onclick="viewDetail('${id}')"><i class="fas fa-eye"></i></button>${deleteBtn}</td></tr>`;
             });
             document.getElementById('totalLines').innerText = tL;
             document.getElementById('totalCompletedDocs').innerText = tF;
         }
-
         function viewDetail(id) {
-            currentLineId = id;
-            document.getElementById('mobileLineSelect').value = id;
+            currentLineId = id; document.getElementById('mobileLineSelect').value = id;
             renderMobileList(allLinesData[id]);
             toggleView();
         }
-
         let isMobile = true;
         function toggleView() {
             const m = document.getElementById('view-mobile');
