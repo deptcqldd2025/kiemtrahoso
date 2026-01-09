@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Đội QLDD - Kiểm tra hồ sơ v2.0</title>
+    <title>Đội QLDD - Kiểm tra hồ sơ v2.1</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d6efd">
@@ -18,14 +18,14 @@
         :root { --primary-color: #0d6efd; --bg-light: #f8f9fa; }
         body { background-color: var(--bg-light); font-family: 'Segoe UI', sans-serif; overscroll-behavior-y: none; }
         
-        .app-header { background: var(--primary-color); color: white; padding: 15px; border-radius: 0 0 20px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; padding-top: env(safe-area-inset-top); }
+        .app-header { background: var(--primary-color); color: white; padding: 15px; border-radius: 0 0 20px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; padding-top: max(15px, env(safe-area-inset-top)); }
         .menu-btn { font-size: 24px; cursor: pointer; color: white; background: none; border: none; }
         .fab-switch { position: fixed; bottom: 20px; right: 20px; z-index: 1000; background: #343a40; color: white; border-radius: 50px; padding: 10px 20px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         
         #loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         
         .record-card { border: none; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; overflow: hidden; }
-        .record-header { background: #e9ecef; padding: 10px 15px; font-weight: bold; color: #495057; display: flex; justify-content: space-between; align-items: center; }
+        .record-header { background: #e9ecef; padding: 10px 15px; font-weight: bold; color: #495057; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         
         .file-item { border-bottom: 1px solid #eee; padding: 8px 10px; font-size: 14px; background: white; }
         .file-meta { font-size: 11px; color: #6c757d; display: block; margin-top: 2px; }
@@ -37,11 +37,15 @@
         
         /* Scanner */
         #scannerModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 9999; display: none; overflow-y: auto; }
-        .scanner-header { background: #212529; color: white; padding: 15px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+        .scanner-header { background: #212529; color: white; padding: 15px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; padding-top: max(15px, env(safe-area-inset-top)); }
         .scan-preview-item { position: relative; display: inline-block; margin: 5px; border: 2px solid #ddd; background: white; }
         .scan-thumb { width: 80px; height: 110px; object-fit: cover; }
         .btn-camera-float { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 50%; background: #dc3545; color: white; border: 4px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 24px; display: flex; align-items: center; justify-content: center; z-index: 101; }
         .btn-remove-page { position: absolute; top: 0; right: 0; background: red; color: white; border: none; width: 20px; height: 20px; font-size: 10px; }
+        
+        /* Collapse content in card */
+        .card-content { display: none; }
+        .card-content.show { display: block; }
     </style>
 </head>
 <body>
@@ -52,7 +56,7 @@
         <button class="btn btn-outline-dark btn-lg px-4" onclick="handleLogin()">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" class="me-2"> Đăng nhập Gmail
         </button>
-        <small class="mt-4 text-muted">Phiên bản PWA 2.0</small>
+        <small class="mt-4 text-muted">Phiên bản 2.1</small>
     </div>
 
     <div id="mainApp" class="d-none">
@@ -71,16 +75,9 @@
                 </div>
                 <div class="list-group list-group-flush">
                     <a href="huong_dan.html" target="_blank" class="list-group-item list-group-item-action">
-                        <i class="fas fa-book me-2 text-primary"></i> 1. Hướng dẫn sử dụng
+                        <i class="fas fa-book me-2 text-primary"></i> Hướng dẫn sử dụng
                     </a>
-                    <button class="list-group-item list-group-item-action" data-bs-toggle="collapse" data-bs-target="#authorCollapse">
-                        <i class="fas fa-info-circle me-2 text-info"></i> 2. Thông tin tác giả
-                    </button>
-                    <div class="collapse p-3 bg-light text-muted small" id="authorCollapse">
-                        <strong>Phát triển bởi:</strong> Đội QLDD<br>
-                        <strong>Phiên bản:</strong> 2.0 (PWA)<br>
-                        <strong>Liên hệ:</strong> deptc.gvatvsld@gmail.com
-                    </div>
+                    <button class="list-group-item list-group-item-action" onclick="alert('V2.1: Cập nhật danh mục hồ sơ mới')">Thông tin Phiên bản 2.1</button>
                     <button id="btnUserManager" class="list-group-item list-group-item-action d-none text-primary fw-bold mt-2" onclick="openUserManager()">
                         <i class="fas fa-users-cog"></i> Quản lý Nhân sự (Admin)
                     </button>
@@ -91,7 +88,7 @@
         <div class="app-header">
             <button class="menu-btn" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i class="fas fa-bars"></i></button>
             <h6 class="m-0 fw-bold">
-                Kiểm tra hồ sơ v2.0
+                Kiểm tra hồ sơ v2.1
                 <span id="headerLockStatus" class="badge bg-danger ms-2" style="display:none"><i class="fas fa-lock"></i></span>
             </h6>
             <div style="width: 24px;"></div>
@@ -120,7 +117,7 @@
             <h4 class="text-primary mb-3">Tổng hợp Tiến độ</h4>
             <div class="row mb-3">
                 <div class="col-md-4 mb-2"><div class="card bg-primary text-white p-3"><h3><span id="totalLines">0</span></h3><small>Tuyến dây</small></div></div>
-                <div class="col-md-4 mb-2"><div class="card bg-success text-white p-3"><h3><span id="totalCompletedDocs">0</span></h3><small>Hạng mục hoàn thành</small></div></div>
+                <div class="col-md-4 mb-2"><div class="card bg-success text-white p-3"><h3><span id="totalCompletedDocs">0</span></h3><small>Đầu mục đã xong</small></div></div>
             </div>
             <div class="card"><div class="card-body"><table class="table"><tbody id="dashboardTableBody"></tbody></table></div></div>
         </div>
@@ -172,15 +169,13 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').then(reg => {
-                    console.log('SW Registered:', reg.scope);
-                }).catch(err => console.log('SW Fail:', err));
+                navigator.serviceWorker.register('./sw.js').then(reg => console.log('SW OK')).catch(err => console.log('SW Fail'));
             });
         }
     </script>
 
     <script>
-        // CONFIG
+        // --- CONFIG ---
         const firebaseConfig = { 
             apiKey: "AIzaSyCzWjfcD5Dgq7V-i2izb9tKLR6QM6qWPQo", 
             authDomain: "tavietnam-78ae8.firebaseapp.com", 
@@ -196,8 +191,58 @@
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzkobBHYC86WLwPgU3nXVxXLXkxxUt3fvmsPMof8-Tww_jN3FdsELmnS2p-f0ipnqif/exec'; 
         const ADMIN_EMAIL = 'deptc.gvatvsld@gmail.com';
 
+        // --- DANH MỤC HỒ SƠ MỚI (V2.1) ---
+        const DOC_CATEGORIES = {
+            QLVH: [ // Nhóm 1: Hồ sơ QLVH
+                { id: 'thong_so_ky_thuat', name: 'Thông số kỹ thuật ĐZ' },
+                { id: 'theo_doi_dong_cat', name: 'Bảng theo dõi đóng cắt' },
+                { id: 'theo_doi_su_co', name: 'Bảng Theo dõi Sự cố' },
+                { id: 'theo_doi_phu_tai', name: 'Bảng thao dõi Phụ tải' },
+                { id: 'theo_doi_hanh_lang', name: 'Bảng Theo dõi kỹ thuật hành lang' },
+                { id: 'theo_doi_dai_tu', name: 'Bảng theo dõi công tác đại tu' },
+                { id: 'tong_hop_ton_tai', name: 'Bảng tổng hợp tồn tại' },
+                { id: 'bang_phan_bo_cot', name: 'Bảng phân bố cột' },
+                { id: 'bang_giao_cheo', name: 'Bảng giao chéo' },
+                { id: 'bang_do_do_vong', name: 'Bảng đo độ võng' },
+                { id: 'bao_cao_nhiet_do', name: 'Bảng báo cáo nhiệt độ' },
+                { id: 'bao_cao_dien_tro', name: 'Bảng báo cáo điện trở' },
+                { id: 'ho_so_thu_tu_pha', name: 'Hồ sơ thứ tự pha' },
+                { id: 'hinh_anh_tru', name: 'Hình Ảnh trụ' },
+                { id: 'bb_ktdk_ngay', name: 'Biên bản KTĐK ngày' },
+                { id: 'bb_ktdk_dem', name: 'Biên bản KTĐK đêm' },
+                { id: 'theo_doi_nha_cong_trinh', name: 'Hồ sơ theo dõi nhà/công trình' }
+            ],
+            THIET_KE: [ // Nhóm 2: Hồ sơ thiết kế
+                { id: 'hs_mong_tru', name: 'Hồ sơ móng trụ' },
+                { id: 'hs_den_bu', name: 'Hồ sơ đền bù' },
+                { id: 'hs_nghiem_thu', name: 'Hồ sơ nghiệm thu' },
+                { id: 'hs_thiet_ke', name: 'Hồ sơ thiết kế' },
+                { id: 'hs_du_thau', name: 'Hồ sơ dự thầu' }
+            ],
+            HOAN_CONG: [ // Nhóm 3: Hồ sơ hoàn công
+                { id: 'hc_phan_mong_tru', name: 'Hồ sơ hoàn công phần móng trụ' },
+                { id: 'hc_phan_tru', name: 'Hồ sơ hoàn công phần trụ' },
+                { id: 'bv_hc_phan_mong', name: 'Bản vẽ hoàn công phần móng' },
+                { id: 'bv_hc_phan_tru', name: 'Bản vẽ hoàn công phần trụ' },
+                { id: 'bv_hc_cap', name: 'Bản vẽ hoàn công hầm cáp, tuyến cáp, mốc cáp' },
+                { id: 'ban_do_dien_tro', name: 'Bản đo điện trở' },
+                { id: 'ban_do_do_vong', name: 'Bản đo độ võng' },
+                { id: 'ban_quan_trac_tru', name: 'Bản quan trắc trụ' },
+                { id: 'toa_do_vn2000', name: 'Tọa độ VN2000 phần DDK và cáp ngầm' },
+                { id: 'ban_phan_bo_cot', name: 'Bản phân bố cột' },
+                { id: 'so_do_thu_tu_pha', name: 'Sơ đồ thứ tự pha' },
+                { id: 'ban_giao_cheo_gt', name: 'Bản giao chéo đường bộ, sắt, sông' },
+                { id: 'ban_giao_cheo_dien', name: 'Bản giao chéo lưới điện và đèn chiếu sáng' },
+                { id: 'tk_nha_hanh_lang', name: 'Bảng thống kê nhà trong hành lang' },
+                { id: 'tk_nha_25m', name: 'Bảng thống kê nhà trong phạm vị 25 mét' },
+                { id: 'hs_boi_thuong', name: 'Hồ sơ bồi thường' }
+            ]
+        };
+
+        // --- GLOBAL STATE ---
         let currentUser = null, currentUserStatus = {}, currentLineId = '', allLinesData = {}, allUsersData = {}, capturedPages = [], scanContext = {};
 
+        // --- AUTH & INIT ---
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
@@ -246,6 +291,7 @@
             });
         }
 
+        // --- LINE LOGIC ---
         function renderLineSelect() {
             const s = document.getElementById('mobileLineSelect');
             const cur = s.value || currentLineId;
@@ -278,12 +324,6 @@
         function isBlockedUser() { if(currentUserStatus.is_blocked) { alert("Tài khoản bị KHÓA. Liên hệ Admin."); return true; } return false; }
         function canEditLine() { if(isBlockedUser()) return false; if(allLinesData[currentLineId].is_locked && currentUser.email !== ADMIN_EMAIL) { alert("Tuyến dây đã bị KHÓA."); return false; } return true; }
 
-        const DOC_CATEGORIES = {
-            TECHNICAL: [ { id: 'phap_ly', name: 'Pháp lý & Thiết kế' }, { id: 'nghiem_thu_ngam', name: 'NT Phần ngầm' }, { id: 'nghiem_thu_noi', name: 'NT Phần nổi' }, { id: 'tiep_dia', name: 'Tiếp địa' }, { id: 'tai_lieu_sx', name: 'Tài liệu NSX' }, { id: 'ban_ve_hoan_cong', name: 'Bản vẽ hoàn công' }, { id: 'dong_dien', name: 'Đóng điện' } ],
-            OPERATIONAL: [ { id: 'nhiem_vu', name: 'Giao nhiệm vụ' }, { id: 'ly_lich', name: 'Lý lịch đường dây' }, { id: 'nhat_ky', name: 'Nhật ký vận hành' }, { id: 'kiem_tra_dinh_ky', name: 'Kiểm tra định kỳ' }, { id: 'vat_tu', name: 'Vật tư dự phòng' } ],
-            ELECTRONIC: [ { id: 'du_lieu_do_xa', name: 'Dữ liệu đo xa' }, { id: 'cau_hinh_thiet_bi', name: 'Cấu hình thiết bị' }, { id: 'hinh_anh_hien_truong', name: 'Hình ảnh hiện trường' } ]
-        };
-
         function getRealName(email) {
             if(!email) return 'Ẩn danh';
             const k = email.replace(/\./g, '_');
@@ -295,6 +335,7 @@
             return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
         }
 
+        // --- RENDER CONTENT ---
         function renderMobileList(lineData) {
             const container = document.getElementById('mobileRecordList');
             const isLocked = lineData.is_locked === true;
@@ -303,39 +344,52 @@
             let html = '';
             const renderGroup = (title, items) => {
                 let h = `<h6 class="text-uppercase fw-bold text-muted mt-4 ps-2 border-start border-4 border-primary">${title}</h6>`;
-                items.forEach(i => {
+                items.forEach((i, idx) => {
                     const rec = (lineData.records && lineData.records[i.id]) ? lineData.records[i.id] : {};
                     const files = rec.files || {};
-                    if(rec.link && !rec.files) files['legacy'] = { link: rec.link, note: 'Hồ sơ cũ', user: rec.updated_by };
-                    
                     const hasFile = Object.keys(files).length > 0;
                     const isNoRecord = rec.no_record === true;
                     let icon = hasFile ? 'fa-check-circle text-success' : (isNoRecord ? 'fa-ban text-danger' : 'fa-circle text-secondary');
 
-                    h += `<div class="card record-card"><div class="record-header"><span><i class="fas ${icon} me-2"></i>${i.name}</span></div>`;
+                    h += `<div class="card record-card">
+                        <div class="record-header" onclick="toggleCard(this)">
+                            <span><i class="fas ${icon} me-2"></i>${i.name}</span>
+                            <i class="fas fa-chevron-down small text-muted"></i>
+                        </div>`;
+                    
+                    // CARD BODY (Ẩn hiện)
+                    h += `<div class="card-content show bg-white">`; // Default show all for scanning workflow
+                    
                     if(isNoRecord) h += `<div class="status-no-record"><i class="fas fa-user-times"></i> Đã kiểm tra (0 HS) - ${getRealName(rec.no_record_user)} <small>(${formatTime(rec.no_record_time)})</small></div>`;
                     
-                    h += `<div class="bg-white">`;
                     for (const [fId, fData] of Object.entries(files)) {
                         const canDel = !isLocked && (currentUser.email === ADMIN_EMAIL || fData.user === currentUser.email);
                         const delBtn = canDel ? `<button class="btn btn-sm text-danger ms-2" onclick="deleteFile('${currentLineId}','${i.id}','${fId}','${fData.user}')"><i class="fas fa-times"></i></button>` : '';
                         h += `<div class="file-item"><div><div class="file-note"><a href="${fData.link}" target="_blank" class="text-decoration-none">${fData.note||'Tài liệu'}</a></div><span class="file-meta"><i class="fas fa-user-edit"></i> ${getRealName(fData.user)} <i class="fas fa-clock ms-2"></i> ${formatTime(fData.created_at)}</span></div><div><a href="${fData.link}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a>${delBtn}</div></div>`;
                     }
-                    h += `</div>`;
                     
                     if(!isLocked || currentUser.email === ADMIN_EMAIL) {
                         h += `<div class="action-bar d-flex gap-2"><button class="btn btn-sm ${isNoRecord?'btn-danger':'btn-outline-secondary'}" onclick="toggleNoRecord('${i.id}')">${isNoRecord?'Hủy':'0 HS'}</button><input type="text" id="note_${i.id}" class="form-control form-control-sm" placeholder="Ghi chú..." ${isNoRecord?'disabled':''}><div class="btn-group"><button class="btn btn-sm btn-warning text-white" onclick="prepareScan('${i.id}')" ${isNoRecord?'disabled':''}><i class="fas fa-camera"></i></button><div class="btn btn-sm btn-secondary position-relative"><i class="fas fa-upload"></i><input type="file" onchange="handleUpload(this, '${i.id}')" ${isNoRecord?'disabled':''} style="position:absolute;left:0;top:0;opacity:0;width:100%;height:100%"></div></div></div>`;
                     }
-                    h += `</div>`;
+                    h += `</div></div>`;
                 });
                 return h;
             };
-            html += renderGroup('1. Hồ sơ Kỹ thuật', DOC_CATEGORIES.TECHNICAL);
-            html += renderGroup('2. Hồ sơ Vận hành', DOC_CATEGORIES.OPERATIONAL);
-            html += renderGroup('3. Hồ sơ Điện tử', DOC_CATEGORIES.ELECTRONIC);
+            html += renderGroup('1. Hồ sơ QLVH', DOC_CATEGORIES.QLVH);
+            html += renderGroup('2. Hồ sơ Thiết kế', DOC_CATEGORIES.THIET_KE);
+            html += renderGroup('3. Hồ sơ Hoàn công', DOC_CATEGORIES.HOAN_CONG);
             container.innerHTML = html;
         }
 
+        function toggleCard(header) {
+            const content = header.nextElementSibling;
+            content.classList.toggle('show');
+            const icon = header.querySelector('.fa-chevron-down');
+            if(content.classList.contains('show')) icon.style.transform = 'rotate(0deg)';
+            else icon.style.transform = 'rotate(-90deg)';
+        }
+
+        // --- ACTIONS ---
         function toggleNoRecord(docId) {
             if(!canEditLine()) return;
             const rec = (allLinesData[currentLineId].records||{})[docId] || {};
@@ -398,13 +452,30 @@
         function renderDashboard() {
             const tb = document.getElementById('dashboardTableBody'); tb.innerHTML = '';
             let tL=0, tF=0;
+            // Tính tổng số mục phải làm (Total Items) = Tổng số mục trong 3 group
+            const PER_LINE = DOC_CATEGORIES.QLVH.length + DOC_CATEGORIES.THIET_KE.length + DOC_CATEGORIES.HOAN_CONG.length;
+
             Object.entries(allLinesData).forEach(([id, l]) => {
                 tL++; let done=0;
                 if(l.records) Object.values(l.records).forEach(rec => { if((rec.files && Object.keys(rec.files).length>0) || rec.link || rec.no_record) done++; });
                 tF += done;
                 const delBtn = (currentUser.email === ADMIN_EMAIL) ? `<button class="btn btn-sm btn-danger ms-1" onclick="handleDeleteLine('${id}')"><i class="fas fa-trash"></i></button>` : '';
                 const lockIcon = (l.is_locked === true) ? '<i class="fas fa-lock text-danger ms-2" title="Đã khóa"></i>' : '';
-                tb.innerHTML += `<tr><td>${l.name} ${lockIcon}</td><td><span class="badge bg-success">${done} mục</span></td><td><button class="btn btn-sm btn-info text-white" onclick="viewDetail('${id}')"><i class="fas fa-eye"></i></button>${delBtn}</td></tr>`;
+                // Tính % hoàn thành
+                const pct = Math.round((done / PER_LINE) * 100);
+                
+                tb.innerHTML += `<tr>
+                    <td>${l.name} ${lockIcon}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="progress flex-grow-1" style="height:10px">
+                                <div class="progress-bar ${pct==100?'bg-success':'bg-warning'}" style="width:${pct}%"></div>
+                            </div> 
+                            <span class="ms-2 small">${pct}%</span>
+                        </div>
+                    </td>
+                    <td><button class="btn btn-sm btn-info text-white" onclick="viewDetail('${id}')"><i class="fas fa-eye"></i></button>${delBtn}</td>
+                </tr>`;
             });
             document.getElementById('totalLines').innerText = tL; document.getElementById('totalCompletedDocs').innerText = tF;
         }
