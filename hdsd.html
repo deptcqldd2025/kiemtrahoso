@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hướng Dẫn Sử Dụng - Đội QLDD</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; color: #333; }
+        .guide-header { background: #0d6efd; color: white; padding: 20px; border-radius: 0 0 20px 20px; margin-bottom: 20px; }
+        .step-number { background: #0d6efd; color: white; width: 25px; height: 25px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; margin-right: 8px; }
+        .icon-demo { font-size: 18px; width: 30px; text-align: center; }
+        .role-badge { font-size: 11px; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; }
+        .role-user { background: #e9ecef; color: #495057; border: 1px solid #ced4da; }
+        .role-admin { background: #dc3545; color: white; border: 1px solid #dc3545; }
+        .accordion-button:not(.collapsed) { color: #0d6efd; background-color: #e7f1ff; }
+        .warning-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; font-size: 14px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+    <div class="guide-header text-center">
+        <h4 class="m-0"><i class="fas fa-book-reader"></i> Hướng Dẫn Sử Dụng</h4>
+        <small>Phiên bản ứng dụng: 1.8</small>
+    </div>
+
+    <div class="container pb-5">
+        
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-body">
+                <h6 class="text-primary fw-bold">Tổng quan</h6>
+                <p class="small text-muted mb-0">
+                    Ứng dụng hỗ trợ Đội QLDD kiểm tra, rà soát và số hóa hồ sơ đường dây/cáp ngầm. 
+                    Dữ liệu được lưu trữ tập trung, bảo mật và đồng bộ tức thời.
+                </p>
+            </div>
+        </div>
+
+        <div class="accordion shadow-sm rounded" id="guideAccordion">
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#c1">
+                        <i class="fas fa-sign-in-alt icon-demo text-primary"></i> 1. Đăng nhập & Bắt đầu
+                    </button>
+                </h2>
+                <div id="c1" class="accordion-collapse collapse show" data-bs-parent="#guideAccordion">
+                    <div class="accordion-body small">
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><span class="step-number">1</span> Truy cập vào đường dẫn ứng dụng.</li>
+                            <li class="mb-2"><span class="step-number">2</span> Nhấn nút <strong>"Đăng nhập bằng Gmail"</strong>.</li>
+                            <li class="mb-2"><span class="step-number">3</span> Chọn tài khoản Google làm việc của bạn.</li>
+                        </ul>
+                        <div class="alert alert-info py-2 small mb-0">
+                            <i class="fas fa-info-circle"></i> Lần đầu đăng nhập, hệ thống sẽ tự động ghi nhận bạn vào danh sách nhân sự.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c2">
+                        <i class="fas fa-route icon-demo text-success"></i> 2. Chọn hoặc Tạo Tuyến
+                    </button>
+                </h2>
+                <div id="c2" class="accordion-collapse collapse" data-bs-parent="#guideAccordion">
+                    <div class="accordion-body small">
+                        <p>Tại màn hình chính (Mobile View):</p>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><strong>Chọn tuyến cũ:</strong> Bấm vào ô "Chọn tuyến" và tìm tên đường dây cần làm việc.</li>
+                            <li class="mb-2"><strong>Tạo mới:</strong> Bấm nút màu xanh <span class="badge bg-success"><i class="fas fa-plus"></i></span> bên cạnh, nhập tên và bấm "Tạo".</li>
+                        </ul>
+                        <div class="warning-box">
+                            Lưu ý: Tên tuyến mới sẽ được đưa lên đầu danh sách để dễ tìm.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c3">
+                        <i class="fas fa-file-upload icon-demo text-warning"></i> 3. Cập nhật Hồ sơ <span class="role-badge role-user ms-2">Quan trọng</span>
+                    </button>
+                </h2>
+                <div id="c3" class="accordion-collapse collapse" data-bs-parent="#guideAccordion">
+                    <div class="accordion-body small">
+                        <p>Tìm đến hạng mục hồ sơ cần bổ sung (VD: Nhật ký vận hành), thực hiện:</p>
+                        
+                        <h6 class="fw-bold mt-3">Bước 1: Nhập Ghi chú (Bắt buộc)</h6>
+                        <p>Nhập tên tài liệu hoặc ghi chú vào ô trống (VD: "Tháng 1/2026").</p>
+
+                        <h6 class="fw-bold mt-3">Bước 2: Chọn phương thức</h6>
+                        <ul>
+                            <li>
+                                <button class="btn btn-sm btn-secondary pt-0 pb-0"><i class="fas fa-upload"></i></button> <strong>Tải lên (Upload):</strong> Dùng khi bạn đã có sẵn file ảnh hoặc PDF trong máy.
+                            </li>
+                            <li>
+                                <button class="btn btn-sm btn-warning text-white pt-0 pb-0"><i class="fas fa-camera"></i></button> <strong>Quét (Scan):</strong> Dùng để chụp trực tiếp văn bản giấy.
+                                <ul>
+                                    <li>Chụp liên tục nhiều trang.</li>
+                                    <li>Sau khi chụp xong, bấm <strong>"Lưu"</strong> để hệ thống tự ghép thành 1 file PDF.</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                        <h6 class="fw-bold mt-3">Trường hợp không có hồ sơ:</h6>
+                        <p>Bấm nút <strong>"0 HS"</strong> hoặc <strong>"Không có HS"</strong>. Hệ thống sẽ đánh dấu màu đỏ <i class="fas fa-ban text-danger"></i> xác nhận bạn đã kiểm tra nhưng không tìm thấy hồ sơ.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c4">
+                        <i class="fas fa-user-shield icon-demo text-danger"></i> 4. Quyền hạn & Bảo mật
+                    </button>
+                </h2>
+                <div id="c4" class="accordion-collapse collapse" data-bs-parent="#guideAccordion">
+                    <div class="accordion-body small">
+                        <table class="table table-bordered table-sm mt-2">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Chức năng</th>
+                                    <th>Người dùng</th>
+                                    <th>Admin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Xem hồ sơ</td>
+                                    <td class="text-center text-success"><i class="fas fa-check"></i></td>
+                                    <td class="text-center text-success"><i class="fas fa-check"></i></td>
+                                </tr>
+                                <tr>
+                                    <td>Tải lên/Scan</td>
+                                    <td class="text-center text-success"><i class="fas fa-check"></i></td>
+                                    <td class="text-center text-success"><i class="fas fa-check"></i></td>
+                                </tr>
+                                <tr>
+                                    <td>Xóa File</td>
+                                    <td>Chỉ xóa file của chính mình</td>
+                                    <td class="text-success fw-bold">Xóa tất cả</td>
+                                </tr>
+                                <tr>
+                                    <td>Xóa Tuyến dây</td>
+                                    <td class="text-center text-danger"><i class="fas fa-times"></i></td>
+                                    <td class="text-center text-success"><i class="fas fa-check"></i></td>
+                                </tr>
+                                <tr>
+                                    <td>Khóa/Mở khóa</td>
+                                    <td class="text-center text-danger"><i class="fas fa-times"></i></td>
+                                    <td class="text-center text-success"><i class="fas fa-check"></i></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="warning-box">
+                            <strong>Lưu ý:</strong> Khi Tuyến dây bị <strong>KHÓA</strong> <i class="fas fa-lock text-danger"></i>, không ai có thể thêm, sửa, xóa file (kể cả file của chính mình) cho đến khi Admin mở khóa.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-danger">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed fw-bold text-danger" type="button" data-bs-toggle="collapse" data-bs-target="#c5">
+                        <i class="fas fa-cogs icon-demo"></i> 5. Chức năng Quản trị (Admin)
+                    </button>
+                </h2>
+                <div id="c5" class="accordion-collapse collapse" data-bs-parent="#guideAccordion">
+                    <div class="accordion-body small bg-light">
+                        <p>Admin (<code>deptc.gvatvsld@gmail.com</code>) có các quyền đặc biệt:</p>
+                        <ol>
+                            <li><strong>Xóa Tuyến Dây:</strong> Nút thùng rác <i class="fas fa-trash text-danger"></i> sẽ hiện cạnh nút thêm mới. Hành động này không thể phục hồi.</li>
+                            <li><strong>Khóa Tuyến (Lock):</strong> Bấm nút <strong>Khóa/Mở</strong> để đóng băng dữ liệu tuyến dây khi đã nghiệm thu xong.</li>
+                            <li><strong>Quản lý Nhân sự:</strong>
+                                <ul>
+                                    <li>Vào Menu (☰) -> Chọn <strong>Quản lý Nhân sự</strong>.</li>
+                                    <li>Cập nhật Tên thật cho nhân viên (để hiển thị trong lịch sử thay vì Email).</li>
+                                    <li>Bấm <strong>"Khóa"</strong> nếu muốn chặn một nhân viên cập nhật dữ liệu.</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="index.html" class="btn btn-primary rounded-pill px-4">
+                <i class="fas fa-arrow-left me-2"></i> Quay lại Ứng dụng
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
