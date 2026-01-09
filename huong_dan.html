@@ -3,59 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hướng Dẫn Sử Dụng - Đội QLDD</title>
+    <title>Hướng Dẫn Sử Dụng - Đội QLDD v2.0</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; color: #333; }
-        .guide-header { background: #0d6efd; color: white; padding: 20px; border-radius: 0 0 20px 20px; margin-bottom: 20px; }
-        .step-number { background: #0d6efd; color: white; width: 25px; height: 25px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; margin-right: 8px; }
-        .icon-demo { font-size: 18px; width: 30px; text-align: center; }
-        .role-badge { font-size: 11px; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; }
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; color: #333; padding-bottom: 50px; }
+        .guide-header { background: #0d6efd; color: white; padding: 20px; border-radius: 0 0 20px 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .step-circle { background: #0d6efd; color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; margin-right: 8px; }
+        .icon-demo { font-size: 20px; width: 30px; text-align: center; margin-right: 10px; }
+        
+        .role-badge { font-size: 10px; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; font-weight: bold; }
         .role-user { background: #e9ecef; color: #495057; border: 1px solid #ced4da; }
         .role-admin { background: #dc3545; color: white; border: 1px solid #dc3545; }
-        .accordion-button:not(.collapsed) { color: #0d6efd; background-color: #e7f1ff; }
-        .warning-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; font-size: 14px; margin: 10px 0; }
+        
+        .accordion-button:not(.collapsed) { color: #0d6efd; background-color: #e7f1ff; box-shadow: inset 0 -1px 0 rgba(0,0,0,.125); }
+        .accordion-item { border: none; margin-bottom: 10px; border-radius: 8px !important; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        
+        .note-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; font-size: 14px; margin: 10px 0; border-radius: 4px; }
+        .tip-box { background: #d1e7dd; border-left: 4px solid #198754; padding: 10px; font-size: 14px; margin: 10px 0; border-radius: 4px; }
     </style>
 </head>
 <body>
 
     <div class="guide-header text-center">
-        <h4 class="m-0"><i class="fas fa-book-reader"></i> Hướng Dẫn Sử Dụng</h4>
-        <small>Phiên bản ứng dụng: 1.8</small>
+        <h4 class="m-0 fw-bold"><i class="fas fa-book-open"></i> Hướng Dẫn Sử Dụng</h4>
+        <small>Phiên bản 2.0 (PWA)</small>
     </div>
 
-    <div class="container pb-5">
+    <div class="container">
         
-        <div class="card shadow-sm mb-4 border-0">
-            <div class="card-body">
-                <h6 class="text-primary fw-bold">Tổng quan</h6>
-                <p class="small text-muted mb-0">
-                    Ứng dụng hỗ trợ Đội QLDD kiểm tra, rà soát và số hóa hồ sơ đường dây/cáp ngầm. 
-                    Dữ liệu được lưu trữ tập trung, bảo mật và đồng bộ tức thời.
-                </p>
+        <div class="card mb-3 border-primary">
+            <div class="card-body bg-light">
+                <h6 class="text-primary fw-bold"><i class="fas fa-download"></i> Cài đặt về máy (Khuyên dùng)</h6>
+                <p class="small text-muted mb-2">Để ứng dụng chạy nhanh hơn, toàn màn hình và không cần mở trình duyệt mỗi lần dùng:</p>
+                <div class="row g-2 small">
+                    <div class="col-6">
+                        <strong><i class="fab fa-android text-success"></i> Android (Chrome)</strong><br>
+                        Bấm menu <i class="fas fa-ellipsis-v"></i> -> Chọn "Cài đặt ứng dụng" hoặc "Thêm vào màn hình chính".
+                    </div>
+                    <div class="col-6">
+                        <strong><i class="fab fa-apple text-dark"></i> iPhone (Safari)</strong><br>
+                        Bấm nút Chia sẻ <i class="fas fa-share-square"></i> -> Chọn "Thêm vào MH chính" (Add to Home Screen).
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="accordion shadow-sm rounded" id="guideAccordion">
+        <div class="accordion" id="guideAccordion">
 
             <div class="accordion-item">
                 <h2 class="accordion-header">
                     <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#c1">
-                        <i class="fas fa-sign-in-alt icon-demo text-primary"></i> 1. Đăng nhập & Bắt đầu
+                        <i class="fas fa-user-check icon-demo text-primary"></i> 1. Quy trình Kiểm tra
                     </button>
                 </h2>
                 <div id="c1" class="accordion-collapse collapse show" data-bs-parent="#guideAccordion">
                     <div class="accordion-body small">
                         <ul class="list-unstyled">
-                            <li class="mb-2"><span class="step-number">1</span> Truy cập vào đường dẫn ứng dụng.</li>
-                            <li class="mb-2"><span class="step-number">2</span> Nhấn nút <strong>"Đăng nhập bằng Gmail"</strong>.</li>
-                            <li class="mb-2"><span class="step-number">3</span> Chọn tài khoản Google làm việc của bạn.</li>
+                            <li class="mb-3">
+                                <span class="step-circle">1</span> <strong>Chọn Tuyến Dây:</strong>
+                                <br>Tại màn hình chính, chọn tên tuyến dây cần làm việc. Nếu là tuyến mới, bấm nút <strong>(+)</strong> để tạo.
+                            </li>
+                            <li class="mb-3">
+                                <span class="step-circle">2</span> <strong>Chọn Hạng mục Hồ sơ:</strong>
+                                <br>Kéo xuống danh sách (Kỹ thuật/Vận hành/Điện tử) để tìm mục cần bổ sung.
+                            </li>
+                            <li class="mb-3">
+                                <span class="step-circle">3</span> <strong>Nhập Ghi chú (Bắt buộc):</strong>
+                                <br>Nhập tên tài liệu (Ví dụ: "Biên bản số 123" hoặc "Tháng 1/2026") vào ô trống.
+                            </li>
+                            <li class="mb-3">
+                                <span class="step-circle">4</span> <strong>Thực hiện:</strong>
+                                <ul>
+                                    <li><i class="fas fa-camera text-warning"></i> <strong>Scan:</strong> Để chụp văn bản giấy (Tự động ghép nhiều trang thành 1 file PDF).</li>
+                                    <li><i class="fas fa-upload text-secondary"></i> <strong>Upload:</strong> Để tải lên file ảnh/PDF có sẵn trong máy.</li>
+                                    <li><button class="btn btn-sm btn-outline-secondary py-0">0 HS</button>: Xác nhận <strong>Không có hồ sơ</strong> (Đã kiểm tra nhưng bị thiếu).</li>
+                                </ul>
+                            </li>
                         </ul>
-                        <div class="alert alert-info py-2 small mb-0">
-                            <i class="fas fa-info-circle"></i> Lần đầu đăng nhập, hệ thống sẽ tự động ghi nhận bạn vào danh sách nhân sự.
-                        </div>
                     </div>
                 </div>
             </div>
@@ -63,52 +89,49 @@
             <div class="accordion-item">
                 <h2 class="accordion-header">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c2">
-                        <i class="fas fa-route icon-demo text-success"></i> 2. Chọn hoặc Tạo Tuyến
+                        <i class="fas fa-shield-alt icon-demo text-success"></i> 2. Quyền Sở hữu & Xóa
                     </button>
                 </h2>
                 <div id="c2" class="accordion-collapse collapse" data-bs-parent="#guideAccordion">
                     <div class="accordion-body small">
-                        <p>Tại màn hình chính (Mobile View):</p>
-                        <ul class="list-unstyled">
-                            <li class="mb-2"><strong>Chọn tuyến cũ:</strong> Bấm vào ô "Chọn tuyến" và tìm tên đường dây cần làm việc.</li>
-                            <li class="mb-2"><strong>Tạo mới:</strong> Bấm nút màu xanh <span class="badge bg-success"><i class="fas fa-plus"></i></span> bên cạnh, nhập tên và bấm "Tạo".</li>
-                        </ul>
-                        <div class="warning-box">
-                            Lưu ý: Tên tuyến mới sẽ được đưa lên đầu danh sách để dễ tìm.
+                        <div class="note-box">
+                            Hệ thống ghi nhận chính xác <strong>Ai</strong> là người tải file lên vào thời điểm nào.
                         </div>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><strong><i class="fas fa-user"></i> Người dùng thường:</strong> Chỉ được phép xóa các file do <strong>chính mình</strong> tải lên. Không thể xóa file của đồng nghiệp.</li>
+                            <li class="mb-2"><strong><i class="fas fa-user-cog"></i> Admin:</strong> Có quyền xóa tất cả các file và xóa toàn bộ tuyến dây.</li>
+                        </ul>
                     </div>
                 </div>
             </div>
 
-            <div class="accordion-item">
+            <div class="accordion-item border-danger">
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c3">
-                        <i class="fas fa-file-upload icon-demo text-warning"></i> 3. Cập nhật Hồ sơ <span class="role-badge role-user ms-2">Quan trọng</span>
+                    <button class="accordion-button collapsed fw-bold text-danger" type="button" data-bs-toggle="collapse" data-bs-target="#c3">
+                        <i class="fas fa-cogs icon-demo"></i> 3. Chức năng Quản trị (Admin)
                     </button>
                 </h2>
                 <div id="c3" class="accordion-collapse collapse" data-bs-parent="#guideAccordion">
-                    <div class="accordion-body small">
-                        <p>Tìm đến hạng mục hồ sơ cần bổ sung (VD: Nhật ký vận hành), thực hiện:</p>
+                    <div class="accordion-body small bg-light">
+                        <p>Dành riêng cho tài khoản: <code>deptc.gvatvsld@gmail.com</code></p>
                         
-                        <h6 class="fw-bold mt-3">Bước 1: Nhập Ghi chú (Bắt buộc)</h6>
-                        <p>Nhập tên tài liệu hoặc ghi chú vào ô trống (VD: "Tháng 1/2026").</p>
+                        <h6 class="fw-bold"><i class="fas fa-users-cog"></i> Quản lý Nhân sự</h6>
+                        <ol>
+                            <li>Mở Menu (☰) -> Chọn <strong>Quản lý Nhân sự</strong>.</li>
+                            <li>Hệ thống tự động liệt kê các Gmail đã từng đăng nhập.</li>
+                            <li><strong>Đổi tên:</strong> Nhập tên thật (Ví dụ: Nguyễn Văn A) để hiển thị trong lịch sử thay vì Email.</li>
+                            <li><strong>Khóa (Block):</strong> Bấm nút "Khóa" để chặn nhân viên đó cập nhật dữ liệu (họ chỉ còn quyền xem).</li>
+                        </ol>
 
-                        <h6 class="fw-bold mt-3">Bước 2: Chọn phương thức</h6>
+                        <h6 class="fw-bold mt-3"><i class="fas fa-lock"></i> Khóa Tuyến Dây</h6>
+                        <p>Khi công trình đã nghiệm thu xong hoặc chốt sổ:</p>
                         <ul>
-                            <li>
-                                <button class="btn btn-sm btn-secondary pt-0 pb-0"><i class="fas fa-upload"></i></button> <strong>Tải lên (Upload):</strong> Dùng khi bạn đã có sẵn file ảnh hoặc PDF trong máy.
-                            </li>
-                            <li>
-                                <button class="btn btn-sm btn-warning text-white pt-0 pb-0"><i class="fas fa-camera"></i></button> <strong>Quét (Scan):</strong> Dùng để chụp trực tiếp văn bản giấy.
-                                <ul>
-                                    <li>Chụp liên tục nhiều trang.</li>
-                                    <li>Sau khi chụp xong, bấm <strong>"Lưu"</strong> để hệ thống tự ghép thành 1 file PDF.</li>
-                                </ul>
-                            </li>
+                            <li>Bấm nút <strong>"Khóa/Mở"</strong> <i class="fas fa-lock text-warning"></i> trên màn hình chính.</li>
+                            <li>Khi đã khóa: Biểu tượng ổ khóa đỏ sẽ hiện ra. Không ai (kể cả Admin) được tải thêm hay sửa xóa file cho đến khi mở lại.</li>
                         </ul>
 
-                        <h6 class="fw-bold mt-3">Trường hợp không có hồ sơ:</h6>
-                        <p>Bấm nút <strong>"0 HS"</strong> hoặc <strong>"Không có HS"</strong>. Hệ thống sẽ đánh dấu màu đỏ <i class="fas fa-ban text-danger"></i> xác nhận bạn đã kiểm tra nhưng không tìm thấy hồ sơ.</p>
+                        <h6 class="fw-bold mt-3"><i class="fas fa-trash"></i> Xóa Tuyến Dây</h6>
+                        <p>Nút Xóa <i class="fas fa-trash text-danger"></i> chỉ hiện ra với Admin. Hành động này sẽ xóa vĩnh viễn tên tuyến và danh sách file (File gốc trên Drive vẫn còn nhưng mất liên kết).</p>
                     </div>
                 </div>
             </div>
@@ -116,74 +139,16 @@
             <div class="accordion-item">
                 <h2 class="accordion-header">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c4">
-                        <i class="fas fa-user-shield icon-demo text-danger"></i> 4. Quyền hạn & Bảo mật
+                        <i class="fas fa-tools icon-demo text-secondary"></i> 4. Khắc phục lỗi thường gặp
                     </button>
                 </h2>
                 <div id="c4" class="accordion-collapse collapse" data-bs-parent="#guideAccordion">
                     <div class="accordion-body small">
-                        <table class="table table-bordered table-sm mt-2">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Chức năng</th>
-                                    <th>Người dùng</th>
-                                    <th>Admin</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Xem hồ sơ</td>
-                                    <td class="text-center text-success"><i class="fas fa-check"></i></td>
-                                    <td class="text-center text-success"><i class="fas fa-check"></i></td>
-                                </tr>
-                                <tr>
-                                    <td>Tải lên/Scan</td>
-                                    <td class="text-center text-success"><i class="fas fa-check"></i></td>
-                                    <td class="text-center text-success"><i class="fas fa-check"></i></td>
-                                </tr>
-                                <tr>
-                                    <td>Xóa File</td>
-                                    <td>Chỉ xóa file của chính mình</td>
-                                    <td class="text-success fw-bold">Xóa tất cả</td>
-                                </tr>
-                                <tr>
-                                    <td>Xóa Tuyến dây</td>
-                                    <td class="text-center text-danger"><i class="fas fa-times"></i></td>
-                                    <td class="text-center text-success"><i class="fas fa-check"></i></td>
-                                </tr>
-                                <tr>
-                                    <td>Khóa/Mở khóa</td>
-                                    <td class="text-center text-danger"><i class="fas fa-times"></i></td>
-                                    <td class="text-center text-success"><i class="fas fa-check"></i></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div class="warning-box">
-                            <strong>Lưu ý:</strong> Khi Tuyến dây bị <strong>KHÓA</strong> <i class="fas fa-lock text-danger"></i>, không ai có thể thêm, sửa, xóa file (kể cả file của chính mình) cho đến khi Admin mở khóa.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion-item border-danger">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed fw-bold text-danger" type="button" data-bs-toggle="collapse" data-bs-target="#c5">
-                        <i class="fas fa-cogs icon-demo"></i> 5. Chức năng Quản trị (Admin)
-                    </button>
-                </h2>
-                <div id="c5" class="accordion-collapse collapse" data-bs-parent="#guideAccordion">
-                    <div class="accordion-body small bg-light">
-                        <p>Admin (<code>deptc.gvatvsld@gmail.com</code>) có các quyền đặc biệt:</p>
-                        <ol>
-                            <li><strong>Xóa Tuyến Dây:</strong> Nút thùng rác <i class="fas fa-trash text-danger"></i> sẽ hiện cạnh nút thêm mới. Hành động này không thể phục hồi.</li>
-                            <li><strong>Khóa Tuyến (Lock):</strong> Bấm nút <strong>Khóa/Mở</strong> để đóng băng dữ liệu tuyến dây khi đã nghiệm thu xong.</li>
-                            <li><strong>Quản lý Nhân sự:</strong>
-                                <ul>
-                                    <li>Vào Menu (☰) -> Chọn <strong>Quản lý Nhân sự</strong>.</li>
-                                    <li>Cập nhật Tên thật cho nhân viên (để hiển thị trong lịch sử thay vì Email).</li>
-                                    <li>Bấm <strong>"Khóa"</strong> nếu muốn chặn một nhân viên cập nhật dữ liệu.</li>
-                                </ul>
-                            </li>
-                        </ol>
+                        <ul>
+                            <li class="mb-2"><strong>Lỗi "Failed to fetch":</strong> Do mất mạng hoặc link kết nối Google Script bị thay đổi. Hãy kiểm tra 4G/Wifi.</li>
+                            <li class="mb-2"><strong>Không thấy nút Thêm/Sửa:</strong> Có thể bạn đang bị Khóa tài khoản hoặc Tuyến dây đang bị Khóa.</li>
+                            <li class="mb-2"><strong>Scan bị lỗi:</strong> Đảm bảo bạn đã cho phép trình duyệt truy cập Camera.</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -191,7 +156,7 @@
         </div>
 
         <div class="text-center mt-4">
-            <a href="index.html" class="btn btn-primary rounded-pill px-4">
+            <a href="index.html" class="btn btn-primary rounded-pill px-4 shadow">
                 <i class="fas fa-arrow-left me-2"></i> Quay lại Ứng dụng
             </a>
         </div>
