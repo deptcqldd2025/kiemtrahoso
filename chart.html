@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Biểu Đồ Tiến Độ - Đội QLDD</title>
+    <title>Biểu Đồ Tiến Độ - Đội QLDD v2.7</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -18,41 +18,50 @@
 
     <div id="loading" class="loading-screen">
         <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-2 text-muted">Đang phân tích dữ liệu...</p>
+        <p class="mt-2 text-muted">Đang phân tích dữ liệu chi tiết...</p>
     </div>
 
     <div class="chart-header d-flex align-items-center justify-content-between">
-        <h5 class="m-0"><i class="fas fa-chart-pie"></i> Biểu Đồ Tiến Độ</h5>
+        <h5 class="m-0"><i class="fas fa-chart-line"></i> Phân Tích Dữ Liệu</h5>
         <a href="index.html" class="btn btn-sm btn-light text-primary fw-bold"><i class="fas fa-home"></i> Trang chủ</a>
     </div>
 
     <div class="container pb-5">
         
-        <div class="chart-card">
-            <h6 class="text-primary fw-bold mb-3"><i class="fas fa-chart-bar"></i> Tổng quan các Tuyến dây</h6>
-            <div style="height: 300px;">
-                <canvas id="overviewChart"></canvas>
+        <div class="card mb-3 border-0 shadow-sm">
+            <div class="card-body p-2">
+                <select id="lineSelect" class="form-select border-0 fw-bold text-primary" onchange="handleFilterChange()">
+                    <option value="">-- Toàn bộ hệ thống --</option>
+                </select>
             </div>
-            <div class="mt-2 text-center small text-muted">So sánh mức độ hoàn thành (%)</div>
         </div>
 
         <div class="chart-card">
-            <h6 class="text-success fw-bold mb-3"><i class="fas fa-search-location"></i> Chi tiết từng Tuyến</h6>
-            
-            <select id="lineSelect" class="form-select mb-3" onchange="updateDetailChart()">
-                <option value="">-- Chọn tuyến dây --</option>
-            </select>
+            <h6 class="text-primary fw-bold mb-3">
+                <i class="fas fa-history"></i> Tiến độ nhập liệu theo Giờ
+            </h6>
+            <div style="height: 300px;">
+                <canvas id="growthChart"></canvas>
+            </div>
+            <div class="mt-2 text-center small text-muted fst-italic">
+                Số lượng file tích lũy theo từng khung giờ
+            </div>
+        </div>
 
+        <div class="chart-card">
+            <h6 class="text-success fw-bold mb-3">
+                <i class="fas fa-chart-pie"></i> Trạng thái hiện tại
+            </h6>
             <div class="row align-items-center">
                 <div class="col-md-6 mb-3">
                     <div style="height: 250px; position: relative;">
-                        <canvas id="detailChart"></canvas>
+                        <canvas id="statusChart"></canvas>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <ul class="list-group list-group-flush small">
                         <li class="list-group-item d-flex justify-content-between">
-                            <span><i class="fas fa-check-circle text-success"></i> Đã có hồ sơ:</span>
+                            <span><i class="fas fa-check-circle text-success"></i> Đã có file:</span>
                             <strong id="stDone">0</strong>
                         </li>
                         <li class="list-group-item d-flex justify-content-between">
@@ -63,10 +72,6 @@
                             <span><i class="fas fa-exclamation-circle text-secondary"></i> Còn thiếu:</span>
                             <strong id="stMissing">0</strong>
                         </li>
-                        <li class="list-group-item d-flex justify-content-between bg-light fw-bold">
-                            <span>Tổng đầu mục:</span>
-                            <strong id="stTotal">0</strong>
-                        </li>
                     </ul>
                 </div>
             </div>
@@ -75,12 +80,11 @@
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-        // 1. CONFIG
         const firebaseConfig = { 
             apiKey: "AIzaSyCzWjfcD5Dgq7V-i2izb9tKLR6QM6qWPQo", 
             authDomain: "tavietnam-78ae8.firebaseapp.com", 
@@ -93,141 +97,162 @@
         const db = firebase.database();
         const auth = firebase.auth();
 
-        // Định nghĩa tổng số mục (Phải khớp với index.html)
-        // QLVH(17) + THIET_KE(5) + HOAN_CONG(16) = 38
-        const TOTAL_ITEMS = 17 + 5 + 16; 
+        const TOTAL_ITEMS_PER_LINE = 38; 
 
-        // Global Vars
         let allLinesData = {};
-        let overviewChartInstance = null;
-        let detailChartInstance = null;
+        let growthChart = null;
+        let statusChart = null;
 
-        // 2. AUTH CHECK
         auth.onAuthStateChanged(user => {
-            if (!user) {
-                alert("Vui lòng đăng nhập!");
-                window.location.href = "index.html";
-            } else {
-                initData();
-            }
+            if (!user) { alert("Vui lòng đăng nhập!"); window.location.href = "index.html"; }
+            else { initData(); }
         });
 
-        // 3. LOAD DATA
         function initData() {
             db.ref('lines').on('value', snap => {
                 allLinesData = snap.val() || {};
-                processAndRender();
+                renderSelectBox();
+                handleFilterChange();
                 document.getElementById('loading').style.display = 'none';
             });
         }
 
-        function processAndRender() {
-            // Render Select Box
+        function renderSelectBox() {
             const select = document.getElementById('lineSelect');
-            select.innerHTML = '<option value="">-- Chọn tuyến dây --</option>';
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- Toàn bộ hệ thống --</option>';
             Object.entries(allLinesData).forEach(([id, line]) => {
                 select.innerHTML += `<option value="${id}">${line.name}</option>`;
             });
-
-            renderOverviewChart();
-            
-            // Auto select first line if exists
-            const firstId = Object.keys(allLinesData)[0];
-            if(firstId) {
-                select.value = firstId;
-                updateDetailChart();
-            }
+            select.value = currentVal;
         }
 
-        // 4. CHART 1: OVERVIEW (BAR)
-        function renderOverviewChart() {
-            const ctx = document.getElementById('overviewChart').getContext('2d');
-            
-            const labels = [];
-            const dataPercent = [];
-            const backgroundColors = [];
+        function handleFilterChange() {
+            const lineId = document.getElementById('lineSelect').value;
+            renderGrowthChart(lineId);
+            renderStatusChart(lineId);
+        }
 
-            Object.values(allLinesData).forEach(line => {
-                let doneCount = 0;
+        // --- 1. BIỂU ĐỒ TĂNG TRƯỞNG THEO GIỜ ---
+        function renderGrowthChart(lineId) {
+            const timeline = {}; 
+            
+            const processLine = (line) => {
                 if(line.records) {
                     Object.values(line.records).forEach(rec => {
-                        if ((rec.files && Object.keys(rec.files).length > 0) || rec.link || rec.no_record) {
-                            doneCount++;
+                        if(rec.files) {
+                            Object.values(rec.files).forEach(f => {
+                                // Lấy thời gian: YYYY-MM-DD HH:00
+                                const d = new Date(f.created_at);
+                                // Tạo key để sort: 2026011014 (NămThángNgàyGiờ)
+                                const sortKey = d.getFullYear() + 
+                                                String(d.getMonth()+1).padStart(2,'0') + 
+                                                String(d.getDate()).padStart(2,'0') + 
+                                                String(d.getHours()).padStart(2,'0');
+                                
+                                // Tạo label hiển thị: 14:00 10/01
+                                const label = `${String(d.getHours()).padStart(2,'0')}:00 ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+                                
+                                if (!timeline[sortKey]) {
+                                    timeline[sortKey] = { label: label, count: 0 };
+                                }
+                                timeline[sortKey].count += 1;
+                            });
                         }
                     });
                 }
-                const pct = Math.round((doneCount / TOTAL_ITEMS) * 100);
-                
-                labels.push(line.name);
-                dataPercent.push(pct);
-                
-                // Color Logic
-                if (pct === 100) backgroundColors.push('#198754'); // Green
-                else if (pct >= 50) backgroundColors.push('#ffc107'); // Yellow
-                else backgroundColors.push('#dc3545'); // Red
+            };
+
+            if(lineId) {
+                if(allLinesData[lineId]) processLine(allLinesData[lineId]);
+            } else {
+                Object.values(allLinesData).forEach(line => processLine(line));
+            }
+
+            // Sort & Cumulative
+            const sortedKeys = Object.keys(timeline).sort();
+            const labels = [];
+            const data = [];
+            let cumulative = 0;
+
+            sortedKeys.forEach(key => {
+                cumulative += timeline[key].count;
+                labels.push(timeline[key].label);
+                data.push(cumulative);
             });
 
-            if(overviewChartInstance) overviewChartInstance.destroy();
+            const ctx = document.getElementById('growthChart').getContext('2d');
+            if(growthChart) growthChart.destroy();
 
-            overviewChartInstance = new Chart(ctx, {
-                type: 'bar',
+            growthChart = new Chart(ctx, {
+                type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: '% Hoàn thành',
-                        data: dataPercent,
-                        backgroundColor: backgroundColors,
-                        borderWidth: 1
+                        label: 'Tổng File (Tích lũy)',
+                        data: data,
+                        borderColor: '#6610f2',
+                        backgroundColor: 'rgba(102, 16, 242, 0.1)',
+                        fill: true,
+                        tension: 0.2, // Đường cong nhẹ
+                        pointRadius: 3
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: { beginAtZero: true, max: 100 }
+                        y: { beginAtZero: true, title: {display: true, text: 'Số lượng File'} },
+                        x: { ticks: { maxTicksLimit: 8 } } // Giới hạn số nhãn hiển thị để không bị rối
                     },
-                    plugins: {
-                        legend: { display: false }
-                    }
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
                 }
             });
         }
 
-        // 5. CHART 2: DETAIL (DOUGHNUT)
-        function updateDetailChart() {
-            const lineId = document.getElementById('lineSelect').value;
-            if(!lineId || !allLinesData[lineId]) return;
-
-            const line = allLinesData[lineId];
+        // --- 2. STATUS CHART ---
+        function renderStatusChart(lineId) {
             let done = 0;
             let noRecord = 0;
+            let totalExpected = 0;
 
-            if(line.records) {
-                Object.values(line.records).forEach(rec => {
-                    if (rec.no_record) {
-                        noRecord++;
-                    } else if ((rec.files && Object.keys(rec.files).length > 0) || rec.link) {
-                        done++;
+            if(lineId && allLinesData[lineId]) {
+                totalExpected = TOTAL_ITEMS_PER_LINE;
+                const line = allLinesData[lineId];
+                if(line.records) {
+                    Object.values(line.records).forEach(rec => {
+                        if(rec.no_record) noRecord++;
+                        else if((rec.files && Object.keys(rec.files).length > 0) || rec.link) done++;
+                    });
+                }
+            } else {
+                totalExpected = Object.keys(allLinesData).length * TOTAL_ITEMS_PER_LINE;
+                Object.values(allLinesData).forEach(line => {
+                    if(line.records) {
+                        Object.values(line.records).forEach(rec => {
+                            if(rec.no_record) noRecord++;
+                            else if((rec.files && Object.keys(rec.files).length > 0) || rec.link) done++;
+                        });
                     }
                 });
             }
-            
-            const missing = TOTAL_ITEMS - done - noRecord;
 
-            // Update Stats Text
+            const missing = Math.max(0, totalExpected - done - noRecord);
+
             document.getElementById('stDone').innerText = done;
             document.getElementById('stNoRecord').innerText = noRecord;
             document.getElementById('stMissing').innerText = missing;
-            document.getElementById('stTotal').innerText = TOTAL_ITEMS;
 
-            // Draw Chart
-            const ctx = document.getElementById('detailChart').getContext('2d');
-            if(detailChartInstance) detailChartInstance.destroy();
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            if(statusChart) statusChart.destroy();
 
-            detailChartInstance = new Chart(ctx, {
+            statusChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Đã có hồ sơ', 'Không có HS', 'Còn thiếu'],
+                    labels: ['Có Hồ sơ', 'Không có HS', 'Chưa kiểm tra'],
                     datasets: [{
                         data: [done, noRecord, missing],
                         backgroundColor: ['#198754', '#dc3545', '#e9ecef'],
@@ -237,9 +262,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    }
+                    plugins: { legend: { position: 'bottom' } }
                 }
             });
         }
