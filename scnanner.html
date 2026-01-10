@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Scanner Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body { background: #222; color: white; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        
+        /* Camera Area */
+        #camera-container { flex-grow: 1; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #000; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Overlay Canvas (vẽ khung xanh nhận diện) */
+        #overlayCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+        /* Kết quả */
+        #result-container { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #111; z-index: 100; flex-direction: column; }
+        #resultCanvas { max-width: 100%; max-height: 80vh; object-fit: contain; border: 2px solid #fff; margin: auto; }
+        
+        /* Controls */
+        .controls { padding: 20px; background: #000; display: flex; justify-content: center; gap: 20px; z-index: 10; }
+        .btn-capture { width: 70px; height: 70px; border-radius: 50%; background: white; border: 5px solid #ccc; }
+        .btn-capture:active { transform: scale(0.95); background: #eee; }
+
+        /* Loading */
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+    </style>
+</head>
+<body>
+
+    <div id="loading">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3">Đang tải bộ não xử lý ảnh (OpenCV)...<br>Vui lòng đợi 5-10s</p>
+    </div>
+
+    <div id="camera-container">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="overlayCanvas"></canvas> </div>
+
+    <div class="controls" id="cameraControls">
+        <button class="btn btn-capture" onclick="captureAndProcess()"></button>
+    </div>
+
+    <div id="result-container">
+        <div class="p-3 text-center text-white bg-dark d-flex justify-content-between align-items-center">
+            <button class="btn btn-outline-light btn-sm" onclick="resetCamera()"><i class="fas fa-times"></i> Chụp lại</button>
+            <span>Kết quả xử lý</span>
+            <button class="btn btn-primary btn-sm" onclick="saveImage()"><i class="fas fa-check"></i> Dùng ảnh này</button>
+        </div>
+        
+        <canvas id="resultCanvas"></canvas>
+
+        <div class="p-3 bg-black d-flex justify-content-center gap-2">
+            <button class="btn btn-sm btn-outline-warning" onclick="applyFilter('original')">Gốc</button>
+            <button class="btn btn-sm btn-outline-white" onclick="applyFilter('gray')">Xám</button>
+            <button class="btn btn-sm btn-outline-info active" onclick="applyFilter('magic')">Magic Color</button>
+        </div>
+    </div>
+
+    <script async src="https://docs.opencv.org/4.5.4/opencv.js" onload="onOpenCvReady()"></script>
+
+    <script>
+        let video = document.getElementById('video');
+        let overlayCanvas = document.getElementById('overlayCanvas');
+        let overlayCtx = overlayCanvas.getContext('2d');
+        let stream = null;
+        let cvReady = false;
+        
+        // Biến lưu ảnh gốc để xử lý bộ lọc
+        let originalMat = null; 
+
+        function onOpenCvReady() {
+            cvReady = true;
+            document.getElementById('loading').style.display = 'none';
+            startCamera();
+        }
+
+        // 1. KHỞI ĐỘNG CAMERA
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } 
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                alert("Lỗi Camera: " + err);
+            }
+        }
+
+        // 2. CHỤP VÀ XỬ LÝ (CORE LOGIC)
+        function captureAndProcess() {
+            if (!cvReady) return alert("Chưa tải xong thư viện!");
+
+            // 1. Chụp ảnh từ Video ra Canvas tạm
+            let tempCanvas = document.createElement('canvas');
+            tempCanvas.width = video.videoWidth;
+            tempCanvas.height = video.videoHeight;
+            let ctx = tempCanvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+
+            // 2. Đọc ảnh vào OpenCV
+            let src = cv.imread(tempCanvas);
+            let dst = new cv.Mat();
+            let gray = new cv.Mat();
+            
+            // --- THUẬT TOÁN TỰ ĐỘNG CẮT (AUTO CROP) ---
+            
+            // B1: Chuyển xám & Làm mờ để giảm nhiễu
+            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+            cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT);
+            
+            // B2: Canny Edge Detection (Tìm biên)
+            cv.Canny(gray, gray, 75, 200);
+
+            // B3: Tìm đường bao (Contours)
+            let contours = new cv.MatVector();
+            let hierarchy = new cv.Mat();
+            cv.findContours(gray, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+            // B4: Tìm tứ giác lớn nhất (Giả sử là tờ giấy)
+            let maxArea = 0;
+            let maxContour = null;
+            
+            for (let i = 0; i < contours.size(); ++i) {
+                let cnt = contours.get(i);
+                let area = cv.contourArea(cnt);
+                if (area > 5000) { // Lọc bỏ nhiễu nhỏ
+                    let peri = cv.arcLength(cnt, true);
+                    let approx = new cv.Mat();
+                    cv.approxPolyDP(cnt, approx, 0.02 * peri, true);
+                    
+                    if (area > maxArea && approx.rows === 4) { // Chỉ lấy hình có 4 góc
+                        maxArea = area;
+                        maxContour = approx; // Lưu lại toạ độ 4 góc
+                    } else {
+                        approx.delete();
+                    }
+                }
+                cnt.delete();
+            }
+
+            // B5: Nếu tìm thấy tờ giấy -> Cắt (Warp Perspective)
+            if (maxContour) {
+                console.log("Đã tìm thấy tài liệu!");
+                // Sắp xếp 4 góc và Warp (Phần này code hơi dài, tôi dùng warp đơn giản nhất)
+                // Để đơn giản cho demo: Tôi sẽ vẽ đường xanh quanh giấy tìm được
+                // Còn thực tế cần hàm `getPerspectiveTransform`
+                
+                // Ở demo này: Tôi sẽ CẮT theo khung bao (Bounding Rect) cho an toàn
+                let rect = cv.boundingRect(maxContour);
+                let roi = src.roi(rect); // Cắt vùng quan tâm
+                dst = roi.clone();
+                roi.delete();
+                maxContour.delete();
+            } else {
+                console.log("Không tìm thấy biên giấy rõ ràng, lấy toàn bộ ảnh.");
+                dst = src.clone();
+            }
+
+            // Lưu Mat gốc để filter sau này
+            if (originalMat) originalMat.delete();
+            originalMat = dst.clone();
+
+            // Hiển thị kết quả (Mặc định áp dụng Magic Filter)
+            applyFilter('magic');
+
+            // Dọn dẹp bộ nhớ
+            src.delete(); gray.delete(); contours.delete(); hierarchy.delete();
+            
+            // Chuyển giao diện
+            document.getElementById('camera-container').style.display = 'none';
+            document.getElementById('cameraControls').style.display = 'none';
+            document.getElementById('result-container').style.display = 'flex';
+        }
+
+        // 3. BỘ LỌC HÌNH ẢNH (IMAGE FILTERS)
+        function applyFilter(type) {
+            if (!originalMat) return;
+            
+            let processed = originalMat.clone();
+            
+            if (type === 'gray') {
+                cv.cvtColor(processed, processed, cv.COLOR_RGBA2GRAY);
+            } 
+            else if (type === 'magic') {
+                // Magic Color: Xám -> Threshold thích ứng -> Làm sạch
+                cv.cvtColor(processed, processed, cv.COLOR_RGBA2GRAY);
+                // Adaptive Threshold: Biến thành đen trắng thông minh
+                cv.adaptiveThreshold(processed, processed, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2);
+            }
+            // type == 'original' thì giữ nguyên
+
+            cv.imshow('resultCanvas', processed);
+            processed.delete();
+        }
+
+        function resetCamera() {
+            document.getElementById('result-container').style.display = 'none';
+            document.getElementById('camera-container').style.display = 'flex';
+            document.getElementById('cameraControls').style.display = 'flex';
+        }
+
+        function saveImage() {
+            let canvas = document.getElementById('resultCanvas');
+            let imageBase64 = canvas.toDataURL('image/jpeg');
+            // Ở đây bạn có thể log ra hoặc gửi đi đâu đó
+            console.log("Ảnh đã xử lý xong!");
+            alert("Đã xử lý xong ảnh! (Trong app chính sẽ tự lưu)");
+        }
+
+    </script>
+</body>
+</html>
