@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Nhân Sự - Đội QLDD</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+        .admin-header { background: #dc3545; color: white; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .user-card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 10px; border-left: 5px solid #198754; transition: 0.2s; }
+        .user-card.blocked { border-left-color: #dc3545; background-color: #fff5f5; opacity: 0.8; }
+        .avatar { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn-icon { width: 35px; height: 35px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-header d-flex align-items-center justify-content-between">
+        <h5 class="m-0"><i class="fas fa-users-cog"></i> Quản Lý Nhân Sự</h5>
+        <a href="index.html" class="btn btn-sm btn-light text-danger fw-bold"><i class="fas fa-home"></i> Trang chủ</a>
+    </div>
+
+    <div class="container pb-5">
+        <div class="row g-2 mb-3">
+            <div class="col-12">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Tìm tên, email hoặc sđt..." oninput="renderList()">
+                </div>
+            </div>
+            <div class="col-12 text-muted small">
+                Tổng số: <b id="totalUsers">0</b> nhân viên
+            </div>
+        </div>
+
+        <div id="userListContainer">
+            <div class="text-center mt-5"><div class="spinner-border text-danger"></div></div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editUserModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Cập nhật thông tin</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editKey">
+                    <div class="mb-3 text-center">
+                        <img id="editAvatar" src="" class="avatar mb-2">
+                        <div id="editEmail" class="text-muted small fw-bold"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Họ và Tên:</label>
+                        <input type="text" id="editName" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số điện thoại:</label>
+                        <input type="text" id="editPhone" class="form-control" placeholder="Nhập số điện thoại...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" onclick="saveUser()">Lưu thay đổi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // 1. CONFIG
+        const firebaseConfig = { 
+            apiKey: "AIzaSyCzWjfcD5Dgq7V-i2izb9tKLR6QM6qWPQo", 
+            authDomain: "tavietnam-78ae8.firebaseapp.com", 
+            projectId: "tavietnam-78ae8", 
+            storageBucket: "tavietnam-78ae8.firebasestorage.app", 
+            messagingSenderId: "670121705534", 
+            appId: "1:670121705534:web:1027ad98550573ad37116f" 
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+        const ADMIN_EMAIL = 'deptc.gvatvsld@gmail.com';
+
+        let allUsers = {};
+
+        // 2. AUTH CHECK (BẢO MẬT)
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                alert("Vui lòng đăng nhập!");
+                window.location.href = "index.html";
+            } else if (user.email !== ADMIN_EMAIL) {
+                alert("Bạn không có quyền truy cập trang này!");
+                window.location.href = "index.html";
+            } else {
+                // Là Admin -> Load dữ liệu
+                initData();
+            }
+        });
+
+        // 3. LOAD DATA
+        function initData() {
+            db.ref('app_users').on('value', snap => {
+                allUsers = snap.val() || {};
+                renderList();
+            });
+        }
+
+        // 4. RENDER LIST
+        function renderList() {
+            const container = document.getElementById('userListContainer');
+            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            container.innerHTML = '';
+            
+            const list = Object.entries(allUsers).filter(([key, u]) => {
+                const searchStr = (u.real_name + u.email + (u.phone || '')).toLowerCase();
+                return searchStr.includes(keyword);
+            });
+
+            document.getElementById('totalUsers').innerText = list.length;
+
+            if(list.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted mt-4">Không tìm thấy nhân viên</div>';
+                return;
+            }
+
+            list.forEach(([key, u]) => {
+                const isBlocked = u.is_blocked === true;
+                const statusHtml = isBlocked 
+                    ? `<span class="badge bg-danger">Đã khóa</span>` 
+                    : `<span class="badge bg-success">Hoạt động</span>`;
+                
+                const btnBlock = isBlocked 
+                    ? `<button class="btn btn-icon btn-outline-success" onclick="toggleBlock('${key}', false)" title="Mở khóa"><i class="fas fa-unlock"></i></button>`
+                    : `<button class="btn btn-icon btn-outline-danger" onclick="toggleBlock('${key}', true)" title="Khóa tài khoản"><i class="fas fa-lock"></i></button>`;
+
+                const phoneDisplay = u.phone ? `<i class="fas fa-phone-alt text-muted small me-1"></i> ${u.phone}` : `<span class="text-muted small fst-italic">Chưa có SĐT</span>`;
+
+                container.innerHTML += `
+                <div class="user-card p-3 ${isBlocked ? 'blocked' : ''}">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <img src="${u.photo || 'https://via.placeholder.com/50'}" class="avatar me-3">
+                            <div>
+                                <h6 class="m-0 fw-bold text-primary">${u.real_name || 'Chưa đặt tên'}</h6>
+                                <div class="small text-muted">${u.email}</div>
+                                <div class="mt-1">${phoneDisplay}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column align-items-end gap-2">
+                            ${statusHtml}
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-icon btn-outline-primary" onclick="openEditModal('${key}')" title="Sửa thông tin"><i class="fas fa-edit"></i></button>
+                                ${btnBlock}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-end mt-2 border-top pt-1 text-muted" style="font-size: 11px;">
+                        Đăng nhập cuối: ${formatTime(u.last_login)}
+                    </div>
+                </div>`;
+            });
+        }
+
+        // 5. ACTIONS
+        function toggleBlock(key, status) {
+            if(confirm(status ? "Chặn nhân viên này cập nhật dữ liệu?" : "Khôi phục quyền cho nhân viên này?")) {
+                db.ref('app_users/' + key).update({ is_blocked: status });
+            }
+        }
+
+        function openEditModal(key) {
+            const u = allUsers[key];
+            document.getElementById('editKey').value = key;
+            document.getElementById('editEmail').innerText = u.email;
+            document.getElementById('editAvatar').src = u.photo || 'https://via.placeholder.com/50';
+            document.getElementById('editName').value = u.real_name || '';
+            document.getElementById('editPhone').value = u.phone || '';
+            
+            new bootstrap.Modal(document.getElementById('editUserModal')).show();
+        }
+
+        function saveUser() {
+            const key = document.getElementById('editKey').value;
+            const name = document.getElementById('editName').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
+            
+            if(!name) return alert("Tên không được để trống!");
+
+            db.ref('app_users/' + key).update({
+                real_name: name,
+                phone: phone
+            }).then(() => {
+                alert("Đã cập nhật!");
+                bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+            });
+        }
+
+        function formatTime(iso) {
+            if(!iso) return 'Chưa đăng nhập';
+            const d = new Date(iso);
+            return `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')} ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+        }
+    </script>
+</body>
+</html>
