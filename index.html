@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Đội QLDD - Kiểm tra hồ sơ v2.3</title>
+    <title>Đội QLDD - Kiểm tra hồ sơ v2.4</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d6efd">
@@ -31,8 +31,6 @@
         .file-meta { font-size: 11px; color: #6c757d; display: block; margin-top: 2px; }
         .file-note { font-weight: 500; color: #0d6efd; }
         
-        .user-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
-        .user-blocked { opacity: 0.5; background: #f8d7da; }
         .status-no-record { background: #fff3cd; color: #856404; padding: 5px 10px; font-size: 13px; border-bottom: 1px solid #ffeeba; }
         
         /* Scanner */
@@ -56,7 +54,7 @@
         <button class="btn btn-outline-dark btn-lg px-4" onclick="handleLogin()">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" class="me-2"> Đăng nhập Gmail
         </button>
-        <small class="mt-4 text-muted">Phiên bản 2.3</small>
+        <small class="mt-4 text-muted">Phiên bản 2.4</small>
     </div>
 
     <div id="mainApp" class="d-none">
@@ -77,10 +75,10 @@
                     <a href="huong_dan.html" target="_blank" class="list-group-item list-group-item-action">
                         <i class="fas fa-book me-2 text-primary"></i> Hướng dẫn sử dụng
                     </a>
-                    <button class="list-group-item list-group-item-action" onclick="alert('V2.3: In biên bản & PWA')">Thông tin Phiên bản 2.3</button>
-                    <button id="btnUserManager" class="list-group-item list-group-item-action d-none text-primary fw-bold mt-2" onclick="openUserManager()">
+                    <button class="list-group-item list-group-item-action" onclick="alert('V2.4: Nâng cấp quản lý nhân sự')">Thông tin Phiên bản 2.4</button>
+                    <a id="btnUserManager" href="user.html" class="list-group-item list-group-item-action d-none text-primary fw-bold mt-2">
                         <i class="fas fa-users-cog"></i> Quản lý Nhân sự (Admin)
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>
@@ -88,7 +86,7 @@
         <div class="app-header">
             <button class="menu-btn" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i class="fas fa-bars"></i></button>
             <h6 class="m-0 fw-bold">
-                Kiểm tra hồ sơ v2.3
+                Kiểm tra hồ sơ v2.4
                 <span id="headerLockStatus" class="badge bg-danger ms-2" style="display:none"><i class="fas fa-lock"></i></span>
             </h6>
             <div style="width: 24px;"></div>
@@ -174,15 +172,6 @@
         </div>
     </div>
 
-    <div class="modal fade" id="userModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white"><h5 class="modal-title">Quản lý Nhân sự</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body p-0"><div id="userListContainer" style="max-height:70vh;overflow-y:auto"></div></div>
-            </div>
-        </div>
-    </div>
-
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
@@ -252,7 +241,13 @@
 
         function handleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
         function handleLogout() { auth.signOut().then(() => location.reload()); }
-        function checkAdminUI() { if(currentUser?.email === ADMIN_EMAIL) { document.getElementById('btnUserManager').classList.remove('d-none'); document.getElementById('adminControls').classList.remove('d-none'); document.getElementById('adminControls').classList.add('d-flex'); } }
+        function checkAdminUI() { 
+            if(currentUser?.email === ADMIN_EMAIL) { 
+                document.getElementById('btnUserManager').classList.remove('d-none'); 
+                document.getElementById('adminControls').classList.remove('d-none'); 
+                document.getElementById('adminControls').classList.add('d-flex'); 
+            } 
+        }
 
         function initDataListeners() {
             db.ref('app_users').on('value', snap => {
@@ -287,7 +282,6 @@
             const s = document.getElementById('mobileLineSelect');
             const cur = s.value || currentLineId;
             s.innerHTML = '<option value="">-- Chọn tuyến --</option>';
-            // SORT A-Z by NAME
             Object.keys(linesToRender).sort((a,b) => linesToRender[a].name.toLowerCase().localeCompare(linesToRender[b].name.toLowerCase())).forEach(id => {
                 s.innerHTML += `<option value="${id}">${linesToRender[id].name}</option>`;
             });
@@ -345,7 +339,10 @@
                     let icon = hasFile ? 'fa-check-circle text-success' : (isNoRecord ? 'fa-ban text-danger' : 'fa-circle text-secondary');
 
                     h += `<div class="card record-card">
-                        <div class="record-header" onclick="toggleCard(this)"><span><i class="fas ${icon} me-2"></i>${i.name}</span><i class="fas fa-chevron-down small text-muted"></i></div>`;
+                        <div class="record-header" onclick="toggleCard(this)">
+                            <span><i class="fas ${icon} me-2"></i>${i.name}</span>
+                            <i class="fas fa-chevron-down small text-muted"></i>
+                        </div>`;
                     
                     h += `<div class="card-content show bg-white">`; // Show by default
                     if(isNoRecord) h += `<div class="status-no-record"><i class="fas fa-user-times"></i> Đã kiểm tra (0 HS) - ${getRealName(rec.no_record_user)} <small>(${formatTime(rec.no_record_time)})</small></div>`;
@@ -416,17 +413,6 @@
             };
         }
 
-        function openUserManager() { new bootstrap.Modal(document.getElementById('userModal')).show(); renderUserManager(); }
-        function renderUserManager() {
-            const c = document.getElementById('userListContainer'); c.innerHTML = '';
-            Object.entries(allUsersData).forEach(([k, u]) => {
-                const isBlocked = u.is_blocked === true;
-                const btn = isBlocked ? `<button class="btn btn-sm btn-success" onclick="toggleBlockUser('${k}',false)">Mở</button>` : `<button class="btn btn-sm btn-danger" onclick="toggleBlockUser('${k}',true)">Khóa</button>`;
-                c.innerHTML += `<div class="user-row ${isBlocked?'user-blocked':''}"><div class="d-flex align-items-center"><img src="${u.photo||''}" class="rounded-circle me-2" style="width:40px;height:40px"><div><input type="text" class="form-control form-control-sm fw-bold mb-1" value="${u.real_name||u.email}" onchange="updateRealName('${k}',this.value)"><div class="small text-muted">${u.email}</div><div class="small text-muted fst-italic">Last: ${formatTime(u.last_login)}</div></div></div><div class="ms-2">${btn}</div></div>`;
-            });
-        }
-        function updateRealName(k, n) { db.ref('app_users/'+k).update({real_name: n}); }
-        function toggleBlockUser(k, s) { db.ref('app_users/'+k).update({is_blocked: s}).then(()=>renderUserManager()); }
         function toggleLockLine() { if(!currentLineId) return; const s = allLinesData[currentLineId].is_locked; if(confirm(s?"MỞ KHÓA?":"KHÓA TUYẾN?")) db.ref('lines/'+currentLineId).update({is_locked:!s}); }
         function handleDeleteLine() { if(!currentLineId) return; if(confirm("XÓA VĨNH VIỄN?")) db.ref('lines/'+currentLineId).remove().then(()=>currentLineId=''); }
 
@@ -440,6 +426,7 @@
         function renderDashboard() {
             const tb = document.getElementById('dashboardTableBody'); tb.innerHTML = '';
             let tL=0, tF=0;
+            // Total items = Sum of all items in 3 categories
             const PER_LINE = DOC_CATEGORIES.QLVH.length + DOC_CATEGORIES.THIET_KE.length + DOC_CATEGORIES.HOAN_CONG.length;
 
             Object.entries(allLinesData).forEach(([id, l]) => {
@@ -450,7 +437,6 @@
                 const lockIcon = (l.is_locked === true) ? '<i class="fas fa-lock text-danger ms-2" title="Đã khóa"></i>' : '';
                 const pct = Math.round((done / PER_LINE) * 100);
                 
-                // [MODIFIED] Added Print Button
                 const printBtn = `<button class="btn btn-sm btn-secondary ms-1" onclick="window.open('print.html?id=${id}', '_blank')" title="In biên bản"><i class="fas fa-print"></i></button>`;
 
                 tb.innerHTML += `<tr>
