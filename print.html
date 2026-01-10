@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biên Bản Kiểm Tra Hồ Sơ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        /* Cấu hình khổ giấy A4 */
+        @page { size: A4; margin: 2cm 1.5cm; }
+        body { font-family: "Times New Roman", Times, serif; font-size: 13pt; line-height: 1.3; color: #000; background: #fff; }
+        
+        /* Ẩn các thành phần không cần in */
+        @media print {
+            .no-print { display: none !important; }
+            body { padding: 0; }
+            .table-bordered th, .table-bordered td { border: 1px solid #000 !important; }
+        }
+
+        /* Style hiển thị trên màn hình */
+        .print-container { max-width: 210mm; margin: 0 auto; padding: 10px; background: white; min-height: 297mm; }
+        .header-tbl td { vertical-align: top; text-align: center; }
+        .section-title { text-transform: uppercase; font-weight: bold; margin-top: 15px; margin-bottom: 5px; }
+        .sign-table { margin-top: 30px; width: 100%; text-align: center; }
+        .sign-table td { vertical-align: top; height: 100px; }
+        
+        /* Loading Overlay */
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+    </style>
+</head>
+<body>
+
+    <div id="loading">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2">Đang tải dữ liệu biên bản...</p>
+    </div>
+
+    <div class="fixed-top bg-dark p-2 text-center no-print d-flex justify-content-center gap-2">
+        <button class="btn btn-sm btn-light" onclick="window.close()">Quay lại</button>
+        <button class="btn btn-sm btn-primary" onclick="window.print()">🖨️ In Ngay / Lưu PDF</button>
+    </div>
+    <div style="height: 50px;" class="no-print"></div>
+
+    <div class="print-container">
+        
+        <table class="header-tbl" style="width: 100%; margin-bottom: 20px;">
+            <tr>
+                <td style="width: 45%;">
+                    CÔNG TY ĐIỆN LỰC GÒ VẤP<br>
+                    <b>ĐỘI QUẢN LÝ ĐƯỜNG DÂY</b><br>
+                    ----------------
+                </td>
+                <td style="width: 55%;">
+                    <b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br>
+                    <b>Độc lập - Tự do - Hạnh phúc</b><br>
+                    ----------------
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="padding-top: 25px;">
+                    <h4 style="margin: 0; font-weight: bold;">BIÊN BẢN KIỂM TRA HỒ SƠ LƯỚI ĐIỆN</h4>
+                    <i id="lblDate">Tp.HCM, ngày ... tháng ... năm ...</i>
+                </td>
+            </tr>
+        </table>
+
+        <div class="section-title">I. THÔNG TIN CHUNG</div>
+        <p class="mb-1">1. Tên công trình/Tuyến dây: <b id="lblLineName">...</b></p>
+        <p class="mb-1">2. Đơn vị quản lý: <b>Đội Quản lý đường dây</b></p>
+        <p class="mb-1">3. Người thực hiện kiểm kê: <b id="lblUserName">...</b></p>
+
+        <div class="section-title">II. KẾT QUẢ RÀ SOÁT HỒ SƠ</div>
+        <table class="table table-bordered table-sm">
+            <thead>
+                <tr class="text-center bg-light">
+                    <th style="width: 10px;">TT</th>
+                    <th>Danh mục hồ sơ</th>
+                    <th style="width: 50px;">SL File</th>
+                    <th style="width: 100px;">Trạng thái</th>
+                    <th>Ghi chú / Chi tiết</th>
+                </tr>
+            </thead>
+            <tbody id="printBody">
+                </tbody>
+        </table>
+
+        <div class="section-title">III. TỔNG HỢP & KẾT LUẬN</div>
+        <ul class="mb-2">
+            <li>Tổng số đầu mục quy định: <b id="statTotal">0</b> mục.</li>
+            <li>Số đầu mục đã có hồ sơ: <b id="statDone">0</b> mục.</li>
+            <li>Số đầu mục xác nhận KHÔNG CÓ: <b id="statNoRecord">0</b> mục.</li>
+            <li>Số đầu mục chưa kiểm tra: <b id="statMissing">0</b> mục.</li>
+        </ul>
+        <p><b>Đánh giá sơ bộ:</b> ....................................................................................................................................</p>
+        <p>...........................................................................................................................................................................</p>
+
+        <table class="sign-table">
+            <tr>
+                <td style="width: 50%;">
+                    <b>ĐẠI DIỆN ĐƠN VỊ THI CÔNG</b><br>
+                    <i>(Ký, ghi rõ họ tên)</i>
+                </td>
+                <td style="width: 50%;">
+                    <b>NGƯỜI LẬP BIÊN BẢN</b><br>
+                    <i>(Ký, ghi rõ họ tên)</i><br><br><br><br>
+                    <b id="lblSignName">...</b>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+
+    <script>
+        // 1. CONFIG (Giống index.html)
+        const firebaseConfig = { 
+            apiKey: "AIzaSyCzWjfcD5Dgq7V-i2izb9tKLR6QM6qWPQo", 
+            authDomain: "tavietnam-78ae8.firebaseapp.com", 
+            projectId: "tavietnam-78ae8", 
+            storageBucket: "tavietnam-78ae8.firebasestorage.app", 
+            messagingSenderId: "670121705534", 
+            appId: "1:670121705534:web:1027ad98550573ad37116f" 
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        // 2. DANH MỤC (Phải khớp với index.html)
+        const DOC_CATEGORIES = {
+            "A. HỒ SƠ QUẢN LÝ VẬN HÀNH": [ { id: 'thong_so_ky_thuat', name: 'Thông số kỹ thuật ĐZ' }, { id: 'theo_doi_dong_cat', name: 'Bảng theo dõi đóng cắt' }, { id: 'theo_doi_su_co', name: 'Bảng Theo dõi Sự cố' }, { id: 'theo_doi_phu_tai', name: 'Bảng thao dõi Phụ tải' }, { id: 'theo_doi_hanh_lang', name: 'Bảng Theo dõi kỹ thuật hành lang' }, { id: 'theo_doi_dai_tu', name: 'Bảng theo dõi công tác đại tu' }, { id: 'tong_hop_ton_tai', name: 'Bảng tổng hợp tồn tại' }, { id: 'bang_phan_bo_cot', name: 'Bảng phân bố cột' }, { id: 'bang_giao_cheo', name: 'Bảng giao chéo' }, { id: 'bang_do_do_vong', name: 'Bảng đo độ võng' }, { id: 'bao_cao_nhiet_do', name: 'Bảng báo cáo nhiệt độ' }, { id: 'bao_cao_dien_tro', name: 'Bảng báo cáo điện trở' }, { id: 'ho_so_thu_tu_pha', name: 'Hồ sơ thứ tự pha' }, { id: 'hinh_anh_tru', name: 'Hình Ảnh trụ' }, { id: 'bb_ktdk_ngay', name: 'Biên bản KTĐK ngày' }, { id: 'bb_ktdk_dem', name: 'Biên bản KTĐK đêm' }, { id: 'theo_doi_nha_cong_trinh', name: 'Hồ sơ theo dõi nhà/công trình' } ],
+            "B. HỒ SƠ THIẾT KẾ": [ { id: 'hs_mong_tru', name: 'Hồ sơ móng trụ' }, { id: 'hs_den_bu', name: 'Hồ sơ đền bù' }, { id: 'hs_nghiem_thu', name: 'Hồ sơ nghiệm thu' }, { id: 'hs_thiet_ke', name: 'Hồ sơ thiết kế' }, { id: 'hs_du_thau', name: 'Hồ sơ dự thầu' } ],
+            "C. HỒ SƠ HOÀN CÔNG": [ { id: 'hc_phan_mong_tru', name: 'Hồ sơ hoàn công phần móng trụ' }, { id: 'hc_phan_tru', name: 'Hồ sơ hoàn công phần trụ' }, { id: 'bv_hc_phan_mong', name: 'Bản vẽ hoàn công phần móng' }, { id: 'bv_hc_phan_tru', name: 'Bản vẽ hoàn công phần trụ' }, { id: 'bv_hc_cap', name: 'Bản vẽ hoàn công hầm cáp, tuyến cáp, mốc cáp' }, { id: 'ban_do_dien_tro', name: 'Bản đo điện trở' }, { id: 'ban_do_do_vong', name: 'Bản đo độ võng' }, { id: 'ban_quan_trac_tru', name: 'Bản quan trắc trụ' }, { id: 'toa_do_vn2000', name: 'Tọa độ VN2000 phần DDK và cáp ngầm' }, { id: 'ban_phan_bo_cot', name: 'Bản phân bố cột' }, { id: 'so_do_thu_tu_pha', name: 'Sơ đồ thứ tự pha' }, { id: 'ban_giao_cheo_gt', name: 'Bản giao chéo đường bộ, sắt, sông' }, { id: 'ban_giao_cheo_dien', name: 'Bản giao chéo lưới điện và đèn chiếu sáng' }, { id: 'tk_nha_hanh_lang', name: 'Bảng thống kê nhà trong hành lang' }, { id: 'tk_nha_25m', name: 'Bảng thống kê nhà trong phạm vị 25 mét' }, { id: 'hs_boi_thuong', name: 'Hồ sơ bồi thường' } ]
+        };
+
+        // 3. LOGIC LẤY DỮ LIỆU
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                alert("Vui lòng đăng nhập từ trang chủ trước!");
+                window.location.href = "index.html";
+                return;
+            }
+            
+            // Lấy ID tuyến dây từ URL (Ví dụ: print.html?id=line_123456)
+            const params = new URLSearchParams(window.location.search);
+            const lineId = params.get('id');
+            
+            if(!lineId) {
+                alert("Không tìm thấy mã tuyến dây!");
+                return;
+            }
+
+            loadData(lineId, user);
+        });
+
+        async function loadData(lineId, user) {
+            const snap = await db.ref('lines/' + lineId).once('value');
+            const data = snap.val();
+            
+            if(!data) {
+                alert("Dữ liệu tuyến dây không tồn tại!");
+                return;
+            }
+
+            // Điền thông tin chung
+            document.getElementById('lblLineName').innerText = data.name.toUpperCase();
+            document.getElementById('lblUserName').innerText = user.displayName;
+            document.getElementById('lblSignName').innerText = user.displayName;
+            
+            const now = new Date();
+            document.getElementById('lblDate').innerText = `Tp.HCM, ngày ${now.getDate()} tháng ${now.getMonth()+1} năm ${now.getFullYear()}`;
+
+            // Render Bảng
+            const tbody = document.getElementById('printBody');
+            let statTotal = 0, statDone = 0, statNoRecord = 0;
+
+            Object.entries(DOC_CATEGORIES).forEach(([groupName, items]) => {
+                // Header nhóm
+                tbody.innerHTML += `<tr class="table-active"><td colspan="5"><b>${groupName}</b></td></tr>`;
+                
+                items.forEach((item, index) => {
+                    statTotal++;
+                    const rec = (data.records && data.records[item.id]) ? data.records[item.id] : {};
+                    const files = rec.files || {};
+                    if(rec.link && !rec.files) files['old'] = {note: 'Dữ liệu cũ'}; // Legacy support
+
+                    const fileCount = Object.keys(files).length;
+                    const isNoRecord = rec.no_record === true;
+                    
+                    let statusText = '<span style="color:gray">Chưa KT</span>';
+                    let noteText = '';
+
+                    if(fileCount > 0) {
+                        statusText = '<b>Đã có</b>';
+                        statDone++;
+                        // Ghép các ghi chú lại
+                        noteText = Object.values(files).map(f => f.note).join('; ');
+                    } else if (isNoRecord) {
+                        statusText = '<b>KHÔNG CÓ</b>';
+                        statNoRecord++;
+                        noteText = 'Đã xác nhận không có hồ sơ';
+                    }
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="text-center">${index + 1}</td>
+                            <td>${item.name}</td>
+                            <td class="text-center">${fileCount || '-'}</td>
+                            <td class="text-center">${statusText}</td>
+                            <td>${noteText}</td>
+                        </tr>
+                    `;
+                });
+            });
+
+            // Update Thống kê
+            document.getElementById('statTotal').innerText = statTotal;
+            document.getElementById('statDone').innerText = statDone;
+            document.getElementById('statNoRecord').innerText = statNoRecord;
+            document.getElementById('statMissing').innerText = statTotal - statDone - statNoRecord;
+
+            // Xong
+            document.getElementById('loading').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
