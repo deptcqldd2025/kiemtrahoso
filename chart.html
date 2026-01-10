@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biểu Đồ Tiến Độ - Đội QLDD</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+        .chart-header { background: #6610f2; color: white; padding: 15px; border-radius: 0 0 20px 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .chart-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+    </style>
+</head>
+<body>
+
+    <div id="loading" class="loading-screen">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Đang phân tích dữ liệu...</p>
+    </div>
+
+    <div class="chart-header d-flex align-items-center justify-content-between">
+        <h5 class="m-0"><i class="fas fa-chart-pie"></i> Biểu Đồ Tiến Độ</h5>
+        <a href="index.html" class="btn btn-sm btn-light text-primary fw-bold"><i class="fas fa-home"></i> Trang chủ</a>
+    </div>
+
+    <div class="container pb-5">
+        
+        <div class="chart-card">
+            <h6 class="text-primary fw-bold mb-3"><i class="fas fa-chart-bar"></i> Tổng quan các Tuyến dây</h6>
+            <div style="height: 300px;">
+                <canvas id="overviewChart"></canvas>
+            </div>
+            <div class="mt-2 text-center small text-muted">So sánh mức độ hoàn thành (%)</div>
+        </div>
+
+        <div class="chart-card">
+            <h6 class="text-success fw-bold mb-3"><i class="fas fa-search-location"></i> Chi tiết từng Tuyến</h6>
+            
+            <select id="lineSelect" class="form-select mb-3" onchange="updateDetailChart()">
+                <option value="">-- Chọn tuyến dây --</option>
+            </select>
+
+            <div class="row align-items-center">
+                <div class="col-md-6 mb-3">
+                    <div style="height: 250px; position: relative;">
+                        <canvas id="detailChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span><i class="fas fa-check-circle text-success"></i> Đã có hồ sơ:</span>
+                            <strong id="stDone">0</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span><i class="fas fa-ban text-danger"></i> Xác nhận Không có:</span>
+                            <strong id="stNoRecord">0</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span><i class="fas fa-exclamation-circle text-secondary"></i> Còn thiếu:</span>
+                            <strong id="stMissing">0</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between bg-light fw-bold">
+                            <span>Tổng đầu mục:</span>
+                            <strong id="stTotal">0</strong>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // 1. CONFIG
+        const firebaseConfig = { 
+            apiKey: "AIzaSyCzWjfcD5Dgq7V-i2izb9tKLR6QM6qWPQo", 
+            authDomain: "tavietnam-78ae8.firebaseapp.com", 
+            projectId: "tavietnam-78ae8", 
+            storageBucket: "tavietnam-78ae8.firebasestorage.app", 
+            messagingSenderId: "670121705534", 
+            appId: "1:670121705534:web:1027ad98550573ad37116f" 
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        // Định nghĩa tổng số mục (Phải khớp với index.html)
+        // QLVH(17) + THIET_KE(5) + HOAN_CONG(16) = 38
+        const TOTAL_ITEMS = 17 + 5 + 16; 
+
+        // Global Vars
+        let allLinesData = {};
+        let overviewChartInstance = null;
+        let detailChartInstance = null;
+
+        // 2. AUTH CHECK
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                alert("Vui lòng đăng nhập!");
+                window.location.href = "index.html";
+            } else {
+                initData();
+            }
+        });
+
+        // 3. LOAD DATA
+        function initData() {
+            db.ref('lines').on('value', snap => {
+                allLinesData = snap.val() || {};
+                processAndRender();
+                document.getElementById('loading').style.display = 'none';
+            });
+        }
+
+        function processAndRender() {
+            // Render Select Box
+            const select = document.getElementById('lineSelect');
+            select.innerHTML = '<option value="">-- Chọn tuyến dây --</option>';
+            Object.entries(allLinesData).forEach(([id, line]) => {
+                select.innerHTML += `<option value="${id}">${line.name}</option>`;
+            });
+
+            renderOverviewChart();
+            
+            // Auto select first line if exists
+            const firstId = Object.keys(allLinesData)[0];
+            if(firstId) {
+                select.value = firstId;
+                updateDetailChart();
+            }
+        }
+
+        // 4. CHART 1: OVERVIEW (BAR)
+        function renderOverviewChart() {
+            const ctx = document.getElementById('overviewChart').getContext('2d');
+            
+            const labels = [];
+            const dataPercent = [];
+            const backgroundColors = [];
+
+            Object.values(allLinesData).forEach(line => {
+                let doneCount = 0;
+                if(line.records) {
+                    Object.values(line.records).forEach(rec => {
+                        if ((rec.files && Object.keys(rec.files).length > 0) || rec.link || rec.no_record) {
+                            doneCount++;
+                        }
+                    });
+                }
+                const pct = Math.round((doneCount / TOTAL_ITEMS) * 100);
+                
+                labels.push(line.name);
+                dataPercent.push(pct);
+                
+                // Color Logic
+                if (pct === 100) backgroundColors.push('#198754'); // Green
+                else if (pct >= 50) backgroundColors.push('#ffc107'); // Yellow
+                else backgroundColors.push('#dc3545'); // Red
+            });
+
+            if(overviewChartInstance) overviewChartInstance.destroy();
+
+            overviewChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '% Hoàn thành',
+                        data: dataPercent,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // 5. CHART 2: DETAIL (DOUGHNUT)
+        function updateDetailChart() {
+            const lineId = document.getElementById('lineSelect').value;
+            if(!lineId || !allLinesData[lineId]) return;
+
+            const line = allLinesData[lineId];
+            let done = 0;
+            let noRecord = 0;
+
+            if(line.records) {
+                Object.values(line.records).forEach(rec => {
+                    if (rec.no_record) {
+                        noRecord++;
+                    } else if ((rec.files && Object.keys(rec.files).length > 0) || rec.link) {
+                        done++;
+                    }
+                });
+            }
+            
+            const missing = TOTAL_ITEMS - done - noRecord;
+
+            // Update Stats Text
+            document.getElementById('stDone').innerText = done;
+            document.getElementById('stNoRecord').innerText = noRecord;
+            document.getElementById('stMissing').innerText = missing;
+            document.getElementById('stTotal').innerText = TOTAL_ITEMS;
+
+            // Draw Chart
+            const ctx = document.getElementById('detailChart').getContext('2d');
+            if(detailChartInstance) detailChartInstance.destroy();
+
+            detailChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Đã có hồ sơ', 'Không có HS', 'Còn thiếu'],
+                    datasets: [{
+                        data: [done, noRecord, missing],
+                        backgroundColor: ['#198754', '#dc3545', '#e9ecef'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
