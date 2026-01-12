@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Biểu Đồ Tiến Độ - Đội QLDD v2.7</title>
+    <title>Biểu Đồ Tiến Độ - Đội QLDD v2.9</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -18,7 +18,7 @@
 
     <div id="loading" class="loading-screen">
         <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-2 text-muted">Đang phân tích dữ liệu chi tiết...</p>
+        <p class="mt-2 text-muted">Đang phân tích dữ liệu nhân sự...</p>
     </div>
 
     <div class="chart-header d-flex align-items-center justify-content-between">
@@ -37,41 +37,41 @@
         </div>
 
         <div class="chart-card">
-            <h6 class="text-primary fw-bold mb-3">
-                <i class="fas fa-history"></i> Tiến độ nhập liệu theo Giờ
+            <h6 class="text-warning fw-bold mb-3">
+                <i class="fas fa-users"></i> Hiệu suất Nhân sự theo Ngày
             </h6>
-            <div style="height: 300px;">
-                <canvas id="growthChart"></canvas>
+            <div style="height: 350px;">
+                <canvas id="userChart"></canvas>
             </div>
             <div class="mt-2 text-center small text-muted fst-italic">
-                Số lượng file tích lũy theo từng khung giờ
+                Thống kê số lượng hồ sơ mỗi người thực hiện
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h6 class="text-primary fw-bold mb-3">
+                <i class="fas fa-history"></i> Tiến độ tổng thể theo Giờ
+            </h6>
+            <div style="height: 250px;">
+                <canvas id="growthChart"></canvas>
             </div>
         </div>
 
         <div class="chart-card">
             <h6 class="text-success fw-bold mb-3">
-                <i class="fas fa-chart-pie"></i> Trạng thái hiện tại
+                <i class="fas fa-chart-pie"></i> Trạng thái hoàn thành
             </h6>
             <div class="row align-items-center">
                 <div class="col-md-6 mb-3">
-                    <div style="height: 250px; position: relative;">
+                    <div style="height: 200px; position: relative;">
                         <canvas id="statusChart"></canvas>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <ul class="list-group list-group-flush small">
-                        <li class="list-group-item d-flex justify-content-between">
-                            <span><i class="fas fa-check-circle text-success"></i> Đã có file:</span>
-                            <strong id="stDone">0</strong>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between">
-                            <span><i class="fas fa-ban text-danger"></i> Xác nhận Không có:</span>
-                            <strong id="stNoRecord">0</strong>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between">
-                            <span><i class="fas fa-exclamation-circle text-secondary"></i> Còn thiếu:</span>
-                            <strong id="stMissing">0</strong>
-                        </li>
+                        <li class="list-group-item d-flex justify-content-between"><span><i class="fas fa-check-circle text-success"></i> Đã có file:</span><strong id="stDone">0</strong></li>
+                        <li class="list-group-item d-flex justify-content-between"><span><i class="fas fa-ban text-danger"></i> Xác nhận Không có:</span><strong id="stNoRecord">0</strong></li>
+                        <li class="list-group-item d-flex justify-content-between"><span><i class="fas fa-exclamation-circle text-secondary"></i> Còn thiếu:</span><strong id="stMissing">0</strong></li>
                     </ul>
                 </div>
             </div>
@@ -100,8 +100,10 @@
         const TOTAL_ITEMS_PER_LINE = 38; 
 
         let allLinesData = {};
+        let allUsersData = {};
         let growthChart = null;
         let statusChart = null;
+        let userChart = null;
 
         auth.onAuthStateChanged(user => {
             if (!user) { alert("Vui lòng đăng nhập!"); window.location.href = "index.html"; }
@@ -109,11 +111,17 @@
         });
 
         function initData() {
-            db.ref('lines').on('value', snap => {
-                allLinesData = snap.val() || {};
-                renderSelectBox();
-                handleFilterChange();
-                document.getElementById('loading').style.display = 'none';
+            // Load Users để lấy tên thật
+            db.ref('app_users').once('value').then(snap => {
+                allUsersData = snap.val() || {};
+                
+                // Load Data chính
+                db.ref('lines').on('value', snap => {
+                    allLinesData = snap.val() || {};
+                    renderSelectBox();
+                    handleFilterChange();
+                    document.getElementById('loading').style.display = 'none';
+                });
             });
         }
 
@@ -129,141 +137,138 @@
 
         function handleFilterChange() {
             const lineId = document.getElementById('lineSelect').value;
+            renderUserChart(lineId); // Mới
             renderGrowthChart(lineId);
             renderStatusChart(lineId);
         }
 
-        // --- 1. BIỂU ĐỒ TĂNG TRƯỞNG THEO GIỜ ---
-        function renderGrowthChart(lineId) {
-            const timeline = {}; 
-            
-            const processLine = (line) => {
-                if(line.records) {
-                    Object.values(line.records).forEach(rec => {
-                        if(rec.files) {
-                            Object.values(rec.files).forEach(f => {
-                                // Lấy thời gian: YYYY-MM-DD HH:00
-                                const d = new Date(f.created_at);
-                                // Tạo key để sort: 2026011014 (NămThángNgàyGiờ)
-                                const sortKey = d.getFullYear() + 
-                                                String(d.getMonth()+1).padStart(2,'0') + 
-                                                String(d.getDate()).padStart(2,'0') + 
-                                                String(d.getHours()).padStart(2,'0');
-                                
-                                // Tạo label hiển thị: 14:00 10/01
-                                const label = `${String(d.getHours()).padStart(2,'0')}:00 ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
-                                
-                                if (!timeline[sortKey]) {
-                                    timeline[sortKey] = { label: label, count: 0 };
-                                }
-                                timeline[sortKey].count += 1;
-                            });
-                        }
-                    });
-                }
+        function getRealName(email) {
+            if(!email) return 'Unknown';
+            const k = email.replace(/\./g, '_');
+            return (allUsersData[k] && allUsersData[k].real_name) ? allUsersData[k].real_name : email.split('@')[0];
+        }
+
+        function generateColor(index) {
+            const colors = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6610f2', '#0dcaf0', '#20c997', '#d63384'];
+            return colors[index % colors.length];
+        }
+
+        // --- 1. BIỂU ĐỒ NHÂN SỰ (STACKED BAR) ---
+        function renderUserChart(lineId) {
+            const dailyData = {}; // { '10/01': { 'userA': 5, 'userB': 2 } }
+            const allUsersSet = new Set();
+
+            const processFile = (f) => {
+                const date = new Date(f.created_at);
+                const dateStr = `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}`;
+                const userEmail = f.user || 'unknown';
+                
+                if (!dailyData[dateStr]) dailyData[dateStr] = {};
+                if (!dailyData[dateStr][userEmail]) dailyData[dateStr][userEmail] = 0;
+                
+                dailyData[dateStr][userEmail]++;
+                allUsersSet.add(userEmail);
             };
 
-            if(lineId) {
-                if(allLinesData[lineId]) processLine(allLinesData[lineId]);
+            // Duyệt dữ liệu
+            if(lineId && allLinesData[lineId]) {
+                const line = allLinesData[lineId];
+                if(line.records) Object.values(line.records).forEach(r => { if(r.files) Object.values(r.files).forEach(f => processFile(f)); });
             } else {
-                Object.values(allLinesData).forEach(line => processLine(line));
+                Object.values(allLinesData).forEach(line => {
+                    if(line.records) Object.values(line.records).forEach(r => { if(r.files) Object.values(r.files).forEach(f => processFile(f)); });
+                });
             }
 
-            // Sort & Cumulative
-            const sortedKeys = Object.keys(timeline).sort();
-            const labels = [];
-            const data = [];
-            let cumulative = 0;
-
-            sortedKeys.forEach(key => {
-                cumulative += timeline[key].count;
-                labels.push(timeline[key].label);
-                data.push(cumulative);
+            // Chuẩn bị Datasets
+            const labels = Object.keys(dailyData).sort((a,b) => {
+                // Sort ngày DD/MM (đơn giản)
+                return a.split('/').reverse().join('').localeCompare(b.split('/').reverse().join(''));
             });
 
-            const ctx = document.getElementById('growthChart').getContext('2d');
-            if(growthChart) growthChart.destroy();
+            const datasets = [];
+            let colorIdx = 0;
+            
+            allUsersSet.forEach(email => {
+                const data = labels.map(date => dailyData[date][email] || 0);
+                datasets.push({
+                    label: getRealName(email),
+                    data: data,
+                    backgroundColor: generateColor(colorIdx++),
+                    stack: 'Stack 0',
+                });
+            });
 
-            growthChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Tổng File (Tích lũy)',
-                        data: data,
-                        borderColor: '#6610f2',
-                        backgroundColor: 'rgba(102, 16, 242, 0.1)',
-                        fill: true,
-                        tension: 0.2, // Đường cong nhẹ
-                        pointRadius: 3
-                    }]
-                },
+            // Vẽ
+            const ctx = document.getElementById('userChart').getContext('2d');
+            if(userChart) userChart.destroy();
+
+            userChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: { beginAtZero: true, title: {display: true, text: 'Số lượng File'} },
-                        x: { ticks: { maxTicksLimit: 8 } } // Giới hạn số nhãn hiển thị để không bị rối
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true }
                     },
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12 } }
+                    }
                 }
             });
         }
 
-        // --- 2. STATUS CHART ---
+        // --- 2. GROWTH CHART ---
+        function renderGrowthChart(lineId) {
+            const timeline = {};
+            const processLine = (line) => {
+                if(line.records) Object.values(line.records).forEach(r => { if(r.files) Object.values(r.files).forEach(f => {
+                    const d = new Date(f.created_at);
+                    const k = d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+String(d.getHours()).padStart(2,'0');
+                    const l = `${String(d.getHours()).padStart(2,'0')}h ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+                    if(!timeline[k]) timeline[k]={label:l, count:0};
+                    timeline[k].count++;
+                })});
+            };
+
+            if(lineId && allLinesData[lineId]) processLine(allLinesData[lineId]);
+            else Object.values(allLinesData).forEach(processLine);
+
+            const sorted = Object.keys(timeline).sort();
+            const labels = [], data = [];
+            let acc = 0;
+            sorted.forEach(k => { acc+=timeline[k].count; labels.push(timeline[k].label); data.push(acc); });
+
+            const ctx = document.getElementById('growthChart').getContext('2d');
+            if(growthChart) growthChart.destroy();
+            growthChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets: [{ label: 'Tổng File', data, borderColor:'#6610f2', fill:true, tension:0.2 }] },
+                options: { responsive:true, maintainAspectRatio:false, scales:{ x:{ticks:{maxTicksLimit:8}} } }
+            });
+        }
+
+        // --- 3. STATUS CHART ---
         function renderStatusChart(lineId) {
-            let done = 0;
-            let noRecord = 0;
-            let totalExpected = 0;
+            let done=0, noRecord=0, total=0;
+            const calc = (line) => {
+                if(line.records) Object.values(line.records).forEach(r => { if(r.no_record) noRecord++; else if((r.files&&Object.keys(r.files).length>0)||r.link) done++; });
+            };
 
-            if(lineId && allLinesData[lineId]) {
-                totalExpected = TOTAL_ITEMS_PER_LINE;
-                const line = allLinesData[lineId];
-                if(line.records) {
-                    Object.values(line.records).forEach(rec => {
-                        if(rec.no_record) noRecord++;
-                        else if((rec.files && Object.keys(rec.files).length > 0) || rec.link) done++;
-                    });
-                }
-            } else {
-                totalExpected = Object.keys(allLinesData).length * TOTAL_ITEMS_PER_LINE;
-                Object.values(allLinesData).forEach(line => {
-                    if(line.records) {
-                        Object.values(line.records).forEach(rec => {
-                            if(rec.no_record) noRecord++;
-                            else if((rec.files && Object.keys(rec.files).length > 0) || rec.link) done++;
-                        });
-                    }
-                });
-            }
+            if(lineId && allLinesData[lineId]) { total=TOTAL_ITEMS_PER_LINE; calc(allLinesData[lineId]); }
+            else { total=Object.keys(allLinesData).length*TOTAL_ITEMS_PER_LINE; Object.values(allLinesData).forEach(calc); }
 
-            const missing = Math.max(0, totalExpected - done - noRecord);
-
-            document.getElementById('stDone').innerText = done;
-            document.getElementById('stNoRecord').innerText = noRecord;
-            document.getElementById('stMissing').innerText = missing;
+            const missing = Math.max(0, total-done-noRecord);
+            document.getElementById('stDone').innerText=done; document.getElementById('stNoRecord').innerText=noRecord; document.getElementById('stMissing').innerText=missing;
 
             const ctx = document.getElementById('statusChart').getContext('2d');
             if(statusChart) statusChart.destroy();
-
             statusChart = new Chart(ctx, {
                 type: 'doughnut',
-                data: {
-                    labels: ['Có Hồ sơ', 'Không có HS', 'Chưa kiểm tra'],
-                    datasets: [{
-                        data: [done, noRecord, missing],
-                        backgroundColor: ['#198754', '#dc3545', '#e9ecef'],
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } }
-                }
+                data: { labels:['Có HS','Không HS','Thiếu'], datasets:[{ data:[done,noRecord,missing], backgroundColor:['#198754','#dc3545','#e9ecef'] }] },
+                options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{position:'bottom'} } }
             });
         }
     </script>
