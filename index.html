@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Đội QLDD - Kiểm tra hồ sơ v2.11</title>
+    <title>Đội QLDD - Kiểm tra hồ sơ v2.12</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d6efd">
@@ -68,7 +68,7 @@
         <button class="btn btn-outline-dark btn-lg px-4" onclick="handleLogin()">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" class="me-2"> Đăng nhập Gmail
         </button>
-        <small class="mt-4 text-muted">Phiên bản 2.11</small>
+        <small class="mt-4 text-muted">Phiên bản 2.12 (Fix)</small>
     </div>
 
     <div id="mainApp" class="d-none">
@@ -85,7 +85,7 @@
                 <div class="list-group list-group-flush">
                     <a href="huong_dan.html" target="_blank" class="list-group-item list-group-item-action"><i class="fas fa-book me-2 text-primary"></i> Hướng dẫn sử dụng</a>
                     <a href="chart.html" class="list-group-item list-group-item-action"><i class="fas fa-chart-line me-2 text-warning"></i> Thống kê & Báo cáo</a>
-                    <button class="list-group-item list-group-item-action" onclick="alert('V2.11: Xem tài liệu trực tiếp trong ứng dụng')">Thông tin Phiên bản 2.11</button>
+                    <button class="list-group-item list-group-item-action" onclick="alert('V2.12: Sửa lỗi mất danh sách')">Thông tin Phiên bản 2.12</button>
                     <a id="btnUserManager" href="user.html" class="list-group-item list-group-item-action d-none text-primary fw-bold mt-2"><i class="fas fa-users-cog"></i> Quản lý Nhân sự (Admin)</a>
                 </div>
             </div>
@@ -93,7 +93,7 @@
 
         <div class="app-header">
             <button class="menu-btn" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i class="fas fa-bars"></i></button>
-            <h6 class="m-0 fw-bold">Kiểm tra hồ sơ v2.11 <span id="headerLockStatus" class="badge bg-danger ms-2" style="display:none"><i class="fas fa-lock"></i></span></h6>
+            <h6 class="m-0 fw-bold">Kiểm tra hồ sơ v2.12 <span id="headerLockStatus" class="badge bg-danger ms-2" style="display:none"><i class="fas fa-lock"></i></span></h6>
             <div style="width: 24px;"></div>
         </div>
         <button class="fab-switch" onclick="toggleView()"><i class="fas fa-sync"></i> View</button>
@@ -120,7 +120,9 @@
                     <div id="permMessage" class="alert alert-warning mt-2 d-none py-1 small"><i class="fas fa-exclamation-triangle"></i> Bạn không được phân công tuyến này.</div>
                 </div>
             </div>
-            <div id="mobileRecordList" class="px-2 pb-5"></div>
+            <div id="mobileRecordList" class="px-2 pb-5">
+                <div class="text-center mt-5 text-muted small">Đang tải dữ liệu...</div>
+            </div>
         </div>
 
         <div id="view-dashboard" class="container-fluid p-4 d-none">
@@ -226,22 +228,35 @@
                     currentUserStatus = allUsersData[myKey];
                     document.getElementById('menuUserName').innerText = allUsersData[myKey].real_name || currentUser.displayName;
                     document.getElementById('menuUserRole').innerText = getRoleName(currentUserStatus.role);
+                    
                     const isBoss = ['manager', 'leader', 'deputy'].includes(currentUserStatus.role);
-                    if (isBoss) { document.getElementById('btnAddLine').classList.remove('d-none'); document.getElementById('btnAssign').classList.remove('d-none'); }
-                    if (currentUserStatus.role === 'manager') { document.getElementById('btnUserManager').classList.remove('d-none'); document.getElementById('adminControls').classList.remove('d-none'); document.getElementById('adminControls').classList.add('d-flex'); }
+                    if (isBoss) {
+                        document.getElementById('btnAddLine').classList.remove('d-none');
+                        document.getElementById('btnAssign').classList.remove('d-none');
+                    }
+                    if (currentUserStatus.role === 'manager') {
+                        document.getElementById('btnUserManager').classList.remove('d-none');
+                        document.getElementById('adminControls').classList.remove('d-none');
+                        document.getElementById('adminControls').classList.add('d-flex');
+                    }
                 }
             });
             db.ref('lines').on('value', snap => {
                 allLinesData = snap.val() || {};
-                filterLines();
+                // [FIX 2.12] Gọi filterLines để render danh sách ngay khi có dữ liệu
+                filterLines(); 
                 renderDashboard();
-                if (currentLineId && allLinesData[currentLineId]) renderMobileList(allLinesData[currentLineId]);
+                if (currentLineId && allLinesData[currentLineId]) {
+                    renderMobileList(allLinesData[currentLineId]);
+                } else if (!currentLineId) {
+                    document.getElementById('mobileRecordList').innerHTML = '<div class="text-center mt-5 text-muted">Vui lòng chọn tuyến dây</div>';
+                }
             });
         }
 
         function getRoleName(r) { if(r==='manager') return 'Lãnh đạo Đội'; if(r==='leader') return 'Tổ trưởng'; if(r==='deputy') return 'Tổ phó'; return 'Công nhân'; }
 
-        // --- CAMERA V3.0 ---
+        // CAMERA
         let videoStream = null; let facingMode = 'environment'; 
         async function startCamera() {
             const video = document.getElementById('cameraVideo');
@@ -332,25 +347,51 @@
             const r=new FileReader(); r.readAsDataURL(file); r.onload=e=>sendToScript(e.target.result.split(',')[1], file.type, `${currentLineId}_${docId}_${file.name}`, note, docId);
         }
 
-        // [NEW] FUNCTION VIEW DOCUMENT
+        // VIEW DOC
         function viewDocument(link) {
-            // Biến đổi link View thành link Preview để nhúng Iframe
             let previewLink = link;
             if (link.includes('drive.google.com')) {
-                // Thay /view... thành /preview
-                if(link.includes('/view')) {
-                    previewLink = link.replace(/\/view.*/, '/preview');
-                } else {
-                    // Trường hợp link dạng khác, cố gắng chèn preview
-                    previewLink = link + '/preview';
-                }
+                if(link.includes('/view')) previewLink = link.replace(/\/view.*/, '/preview');
+                else previewLink = link + '/preview';
             }
             document.getElementById('docFrame').src = previewLink;
             new bootstrap.Modal(document.getElementById('viewDocModal')).show();
         }
 
-        function filterLines() { const keyword = document.getElementById('lineSearchInput').value.toLowerCase(); const filtered = {}; if (!keyword) { renderLineSelect(allLinesData); return; } for (const [id, data] of Object.entries(allLinesData)) { if (data.name.toLowerCase().includes(keyword)) filtered[id] = data; } renderLineSelect(filtered); }
-        function renderLineSelect(linesToRender = allLinesData) { const s = document.getElementById('mobileLineSelect'); const cur = s.value || currentLineId; s.innerHTML = '<option value="">-- Chọn tuyến --</option>'; Object.keys(linesToRender).sort((a,b) => linesToRender[a].name.localeCompare(linesToRender[b].name)).forEach(id => { s.innerHTML += `<option value="${id}">${linesToRender[id].name}</option>`; }); if (cur && linesToRender[cur]) s.value = cur; }
+        function filterLines() {
+            const keyword = document.getElementById('lineSearchInput').value.toLowerCase();
+            const filtered = {};
+            // [FIX] Nếu không có keyword, hiển thị toàn bộ
+            if (!keyword) { renderLineSelect(allLinesData); return; }
+            
+            // [FIX] Kiểm tra null trước khi loop
+            if (allLinesData) {
+                for (const [id, data] of Object.entries(allLinesData)) { 
+                    if (data && data.name && data.name.toLowerCase().includes(keyword)) filtered[id] = data; 
+                }
+            }
+            renderLineSelect(filtered);
+        }
+
+        function renderLineSelect(linesToRender) {
+            const s = document.getElementById('mobileLineSelect'); 
+            const cur = s.value || currentLineId; 
+            s.innerHTML = '<option value="">-- Chọn tuyến --</option>';
+            
+            // [FIX] Kiểm tra null linesToRender
+            if (!linesToRender) return;
+
+            Object.keys(linesToRender).sort((a,b) => {
+                // [FIX] Sort safe
+                const nA = linesToRender[a].name || '';
+                const nB = linesToRender[b].name || '';
+                return nA.localeCompare(nB);
+            }).forEach(id => { 
+                s.innerHTML += `<option value="${id}">${linesToRender[id].name}</option>`; 
+            });
+            if (cur && linesToRender[cur]) s.value = cur;
+        }
+
         function handleLineChange() { currentLineId = document.getElementById('mobileLineSelect').value; if(currentLineId && allLinesData[currentLineId]) renderMobileList(allLinesData[currentLineId]); else document.getElementById('mobileRecordList').innerHTML = ''; }
         function openCreateModal() { if(isBlockedUser()) return; new bootstrap.Modal(document.getElementById('createLineModal')).show(); }
         function handleCreateLine() { const name = document.getElementById('newLineName').value; if(!name.trim()) return; const newId = 'line_' + Date.now(); db.ref('lines/' + newId).set({ name, created_at: new Date().toISOString(), created_by: currentUser.email, is_locked: false }).then(() => { bootstrap.Modal.getInstance(document.getElementById('createLineModal')).hide(); document.getElementById('newLineName').value = ''; currentLineId = newId; setTimeout(() => { renderLineSelect(allLinesData); document.getElementById('mobileLineSelect').value = newId; renderMobileList({name, records:{}}); }, 300); }); }
@@ -380,15 +421,7 @@
                     for (const [fId, fData] of Object.entries(files)) {
                         const canDel = allowEdit && (currentUserStatus.role === 'manager' || fData.user === currentUser.email);
                         const delBtn = canDel ? `<button class="btn btn-sm text-danger ms-2 btn-delete-file" onclick="deleteFile('${currentLineId}','${i.id}','${fId}','${fData.user}')"><i class="fas fa-times"></i></button>` : '';
-                        // [UPDATED] Change onclick to viewDocument()
-                        h += `<div class="file-item"><div>
-                                <div class="file-note" onclick="viewDocument('${fData.link}')">${fData.note||'Tài liệu'}</div>
-                                <span class="file-meta"><i class="fas fa-user-edit"></i> ${getRealName(fData.user)} <i class="fas fa-clock ms-2"></i> ${formatTime(fData.created_at)}</span>
-                              </div>
-                              <div>
-                                <button class="btn btn-sm btn-outline-primary" onclick="viewDocument('${fData.link}')"><i class="fas fa-eye"></i></button>
-                                ${delBtn}
-                              </div></div>`;
+                        h += `<div class="file-item"><div><div class="file-note" onclick="viewDocument('${fData.link}')">${fData.note||'Tài liệu'}</div><span class="file-meta"><i class="fas fa-user-edit"></i> ${getRealName(fData.user)} <i class="fas fa-clock ms-2"></i> ${formatTime(fData.created_at)}</span></div><div><button class="btn btn-sm btn-outline-primary" onclick="viewDocument('${fData.link}')"><i class="fas fa-eye"></i></button>${delBtn}</div></div>`;
                     }
                     h += `<div class="action-bar d-flex gap-2"><button class="btn btn-sm ${isNoRecord?'btn-danger':'btn-outline-secondary'}" onclick="toggleNoRecord('${i.id}')">${isNoRecord?'Hủy':'0 HS'}</button><input type="text" id="note_${i.id}" class="form-control form-control-sm" placeholder="Ghi chú..."><div class="btn-group"><button class="btn btn-sm btn-warning text-white" onclick="prepareScan('${i.id}')"><i class="fas fa-camera"></i></button><div class="btn btn-sm btn-secondary position-relative"><i class="fas fa-upload"></i><input type="file" onchange="handleUpload(this, '${i.id}')" style="position:absolute;left:0;top:0;opacity:0;width:100%;height:100%"></div></div></div></div></div>`;
                 });
@@ -406,7 +439,22 @@
         function handleDeleteLine() { if(!currentLineId) return; if(confirm("XÓA VĨNH VIỄN?")) db.ref('lines/'+currentLineId).remove().then(()=>currentLineId=''); }
         function openAssignModal() { if(!currentLineId) return alert("Chọn tuyến trước!"); const line=allLinesData[currentLineId]; const assigned=line.assigned_to||{}; const list=document.getElementById('assignUserList'); list.innerHTML=''; Object.entries(allUsersData).forEach(([k, u])=>{ if(u.role==='worker'||!u.role) { const isChecked=assigned[k]?'checked':''; list.innerHTML+=`<label class="list-group-item"><input class="form-check-input me-1" type="checkbox" value="${k}" ${isChecked}> ${u.real_name||u.email}</label>`; } }); new bootstrap.Modal(document.getElementById('assignModal')).show(); }
         function saveAssignment() { const checkboxes=document.querySelectorAll('#assignUserList input:checked'); const assignedMap={}; checkboxes.forEach(cb=>{ assignedMap[cb.value]=true; }); db.ref(`lines/${currentLineId}/assigned_to`).set(assignedMap).then(()=>{ bootstrap.Modal.getInstance(document.getElementById('assignModal')).hide(); alert("Đã phân công!"); }); }
-        function renderDashboard() { const tb = document.getElementById('dashboardTableBody'); tb.innerHTML = ''; let tL=0, tF=0; const PER_LINE = DOC_CATEGORIES.QLVH.length + DOC_CATEGORIES.THIET_KE.length + DOC_CATEGORIES.HOAN_CONG.length; Object.entries(allLinesData).forEach(([id, l]) => { tL++; let done=0; if(l.records) Object.values(l.records).forEach(rec => { if((rec.files && Object.keys(rec.files).length>0) || rec.link || rec.no_record) done++; }); tF += done; const delBtn = (currentUserStatus.role === 'manager') ? `<button class="btn btn-sm btn-danger ms-1" onclick="handleDeleteLine('${id}')"><i class="fas fa-trash"></i></button>` : ''; const lockIcon = (l.is_locked === true) ? '<i class="fas fa-lock text-danger ms-2" title="Đã khóa"></i>' : ''; const pct = Math.round((done / PER_LINE) * 100); const printBtn = `<button class="btn btn-sm btn-secondary ms-1" onclick="window.open('print.html?id=${id}', '_blank')"><i class="fas fa-print"></i></button>`; tb.innerHTML += `<tr><td>${l.name} ${lockIcon}</td><td><div class="progress" style="height:10px"><div class="progress-bar ${pct==100?'bg-success':'bg-warning'}" style="width:${pct}%"></div></div><small>${pct}%</small></td><td><button class="btn btn-sm btn-info text-white" onclick="viewDetail('${id}')"><i class="fas fa-eye"></i></button>${printBtn}${delBtn}</td></tr>`; }); }
+        
+        function renderDashboard() {
+            const tb = document.getElementById('dashboardTableBody'); tb.innerHTML = '';
+            let tL=0, tF=0; const PER_LINE = DOC_CATEGORIES.QLVH.length + DOC_CATEGORIES.THIET_KE.length + DOC_CATEGORIES.HOAN_CONG.length;
+            Object.entries(allLinesData).forEach(([id, l]) => {
+                tL++; let done=0;
+                if(l.records) Object.values(l.records).forEach(rec => { if((rec.files && Object.keys(rec.files).length>0) || rec.link || rec.no_record) done++; });
+                tF += done;
+                const delBtn = (currentUserStatus.role === 'manager') ? `<button class="btn btn-sm btn-danger ms-1" onclick="handleDeleteLine('${id}')"><i class="fas fa-trash"></i></button>` : '';
+                const lockIcon = (l.is_locked === true) ? '<i class="fas fa-lock text-danger ms-2" title="Đã khóa"></i>' : '';
+                const pct = Math.round((done / PER_LINE) * 100);
+                const printBtn = `<button class="btn btn-sm btn-secondary ms-1" onclick="window.open('print.html?id=${id}', '_blank')"><i class="fas fa-print"></i></button>`;
+                tb.innerHTML += `<tr><td>${l.name} ${lockIcon}</td><td><div class="progress" style="height:10px"><div class="progress-bar ${pct==100?'bg-success':'bg-warning'}" style="width:${pct}%"></div></div><small>${pct}%</small></td><td><button class="btn btn-sm btn-info text-white" onclick="viewDetail('${id}')"><i class="fas fa-eye"></i></button>${printBtn}${delBtn}</td></tr>`;
+            });
+            document.getElementById('totalLines').innerText = tL; document.getElementById('totalCompletedDocs').innerText = tF;
+        }
         function viewDetail(id) { currentLineId = id; document.getElementById('mobileLineSelect').value = id; renderMobileList(allLinesData[id]); toggleView(); }
         let isMobile = true;
         function toggleView() { const m=document.getElementById('view-mobile'), d=document.getElementById('view-dashboard'); if(isMobile) { m.classList.add('d-none'); d.classList.remove('d-none'); } else { d.classList.add('d-none'); m.classList.remove('d-none'); } isMobile = !isMobile; }
