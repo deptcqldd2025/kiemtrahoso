@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qldd-cache-v3.1';
+const CACHE_NAME = 'qldd-cache-v3.2';
 const FILES_TO_CACHE = [
   './',
   './index.html',
