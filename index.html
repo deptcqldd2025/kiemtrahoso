@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Đội QLDD - V3.3 (Fix List)</title>
+    <title>Đội QLDD - Kiểm tra hồ sơ v3.4</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d6efd">
@@ -17,22 +17,28 @@
     <style>
         :root { --primary-color: #0d6efd; --bg-light: #f8f9fa; }
         body { background-color: var(--bg-light); font-family: 'Segoe UI', sans-serif; overscroll-behavior-y: none; }
+        
         .app-header { background: var(--primary-color); color: white; padding: 15px; border-radius: 0 0 20px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; padding-top: max(15px, env(safe-area-inset-top)); }
         .menu-btn { font-size: 24px; cursor: pointer; color: white; background: none; border: none; }
         .fab-switch { position: fixed; bottom: 20px; right: 20px; z-index: 1000; background: #343a40; color: white; border-radius: 50px; padding: 10px 20px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        
         #loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
         .record-card { border: none; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; overflow: hidden; }
         .record-header { background: #e9ecef; padding: 10px 15px; font-weight: bold; color: #495057; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        
         .file-item { border-bottom: 1px solid #eee; padding: 8px 10px; font-size: 14px; background: white; }
         .file-meta { font-size: 11px; color: #6c757d; display: block; margin-top: 2px; }
         .file-note { font-weight: 500; color: #0d6efd; cursor: pointer; }
+        .file-note:hover { text-decoration: underline; }
+        
         .status-no-record { background: #fff3cd; color: #856404; padding: 5px 10px; font-size: 13px; border-bottom: 1px solid #ffeeba; }
         .readonly-mode .action-bar, .readonly-mode .btn-delete-file { display: none !important; }
         .card-content { display: none; }
         .card-content.show { display: block; }
         .upload-btn-wrapper { position: relative; overflow: hidden; display: inline-block; cursor: pointer; }
         .upload-btn-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-        
+
         /* Camera UI */
         #cameraOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 99999; display: none; flex-direction: column; }
         #cameraVideo { width: 100%; flex-grow: 1; object-fit: cover; }
@@ -43,6 +49,12 @@
         .cam-thumb-box { display: inline-block; position: relative; width: 60px; height: 80px; margin-right: 5px; border: 2px solid white; }
         .cam-thumb-img { width: 100%; height: 100%; object-fit: cover; }
         .btn-del-thumb { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; border: none; display: flex; align-items: center; justify-content: center; }
+        
+        /* [IMPROVED] Loading Screen */
+        #loadingOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100000; text-align: center; padding-top: 40vh; }
+        .spinner-border { width: 3rem; height: 3rem; }
+        #networkStatus { font-size: 12px; color: #aaa; margin-top: 15px; }
+        #btnReload { display: none; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -53,7 +65,7 @@
         <button class="btn btn-outline-dark btn-lg px-4" onclick="handleLogin()">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" class="me-2"> Đăng nhập Gmail
         </button>
-        <small class="mt-4 text-muted">Phiên bản 3.3 (Fix List)</small>
+        <small class="mt-4 text-muted">Phiên bản 3.4 (Fast Load)</small>
     </div>
 
     <div id="mainApp" class="d-none">
@@ -70,6 +82,7 @@
                 <div class="list-group list-group-flush">
                     <a href="huong_dan.html" target="_blank" class="list-group-item list-group-item-action"><i class="fas fa-book me-2 text-primary"></i> Hướng dẫn sử dụng</a>
                     <a href="chart.html" class="list-group-item list-group-item-action"><i class="fas fa-chart-line me-2 text-warning"></i> Thống kê & Báo cáo</a>
+                    <button class="list-group-item list-group-item-action" onclick="alert('V3.4: Tối ưu kết nối mạng')">Thông tin Phiên bản 3.4</button>
                     <a id="btnUserManager" href="user.html" class="list-group-item list-group-item-action d-none text-primary fw-bold mt-2"><i class="fas fa-users-cog"></i> Quản lý Nhân sự (Admin)</a>
                 </div>
             </div>
@@ -77,7 +90,7 @@
 
         <div class="app-header">
             <button class="menu-btn" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i class="fas fa-bars"></i></button>
-            <h6 class="m-0 fw-bold">Kiểm tra hồ sơ v3.3 <span id="headerLockStatus" class="badge bg-danger ms-2" style="display:none"><i class="fas fa-lock"></i></span></h6>
+            <h6 class="m-0 fw-bold">Kiểm tra hồ sơ v3.4 <span id="headerLockStatus" class="badge bg-danger ms-2" style="display:none"><i class="fas fa-lock"></i></span></h6>
             <div style="width: 24px;"></div>
         </div>
         <button class="fab-switch" onclick="toggleView()"><i class="fas fa-sync"></i> View</button>
@@ -85,7 +98,7 @@
         <div id="view-mobile" class="container pb-5">
             <div class="card mx-2 mb-4 shadow-sm">
                 <div class="card-body p-3">
-                    <label class="form-label small text-muted fw-bold">CHỌN TUYẾN DÂY:</label>
+                    <label class="form-label small text-muted fw-bold">TÌM & CHỌN TUYẾN:</label>
                     <div class="input-group mb-2">
                         <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
                         <input type="text" id="lineSearchInput" class="form-control border-start-0" placeholder="Nhập tên tuyến..." oninput="filterLines()">
@@ -94,17 +107,19 @@
                         <select id="mobileLineSelect" class="form-select" onchange="handleLineChange()">
                             <option value="">-- Đang tải dữ liệu... --</option>
                         </select>
-                        <button id="btnAssign" class="btn btn-primary d-none" onclick="openAssignModal()"><i class="fas fa-users"></i></button>
+                        <button id="btnAssign" class="btn btn-primary d-none" onclick="openAssignModal()" title="Phân công"><i class="fas fa-users"></i></button>
                         <button id="btnAddLine" class="btn btn-success d-none" onclick="openCreateModal()"><i class="fas fa-plus"></i></button>
                     </div>
                     <div id="adminControls" class="mt-2 d-none d-flex justify-content-end gap-2">
                         <button class="btn btn-sm btn-warning" onclick="toggleLockLine()"><i class="fas fa-lock"></i> Khóa/Mở</button>
                         <button class="btn btn-sm btn-danger" onclick="handleDeleteLine()"><i class="fas fa-trash"></i> Xóa</button>
                     </div>
-                    <div id="permMessage" class="alert alert-warning mt-2 d-none py-1 small"><i class="fas fa-exclamation-triangle"></i> Bạn không được phân công.</div>
+                    <div id="permMessage" class="alert alert-warning mt-2 d-none py-1 small"><i class="fas fa-exclamation-triangle"></i> Bạn không được phân công tuyến này.</div>
                 </div>
             </div>
-            <div id="mobileRecordList" class="px-2 pb-5"></div>
+            <div id="mobileRecordList" class="px-2 pb-5">
+                <div class="text-center mt-5 text-muted small fst-italic">Vui lòng chọn tuyến dây để xem hồ sơ</div>
+            </div>
         </div>
 
         <div id="view-dashboard" class="container-fluid p-4 d-none">
@@ -113,16 +128,23 @@
         </div>
     </div>
 
-    <div class="modal fade" id="viewDocModal" tabindex="-1"><div class="modal-dialog modal-fullscreen"><div class="modal-content"><div class="modal-header bg-dark text-white p-2"><h6 class="modal-title m-0">Xem Tài Liệu</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-0" style="background: #333;"><iframe id="docFrame" style="width:100%; height:100%; border:none;" allow="autoplay"></iframe></div></div></div></div>
-    <div id="loadingOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:100000;text-align:center;color:white;padding-top:45vh"><div class="spinner-border text-light"></div><p class="mt-2 text-white" id="loadingText">Processing...</p></div>
-    <div class="modal fade" id="createLineModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Thêm Tuyến</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="text" id="newLineName" class="form-control" placeholder="Tên tuyến..."></div><div class="modal-footer"><button class="btn btn-primary" onclick="handleCreateLine()">Tạo</button></div></div></div></div>
-    <div class="modal fade" id="assignModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title">Phân công nhóm</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div id="assignUserList" class="list-group"></div></div><div class="modal-footer"><button class="btn btn-primary w-100" onclick="saveAssignment()">Lưu</button></div></div></div></div>
+    <div class="modal fade" id="viewDocModal" tabindex="-1"><div class="modal-dialog modal-fullscreen"><div class="modal-content"><div class="modal-header bg-dark text-white p-2"><h6 class="modal-title m-0"><i class="fas fa-file-alt"></i> Xem Tài Liệu</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-0" style="background: #333;"><iframe id="docFrame" style="width:100%; height:100%; border:none;" allow="autoplay"></iframe></div></div></div></div>
 
     <div id="cameraOverlay">
-        <div class="cam-header"><button class="btn btn-sm btn-outline-light rounded-pill" onclick="closeCamera()">Đóng</button><span class="text-white small">Camera</span><button class="btn btn-sm btn-outline-light rounded-pill" onclick="switchCamera()">Đổi Cam</button></div>
+        <div class="cam-header"><button class="btn btn-sm btn-outline-light rounded-pill" onclick="closeCamera()"><i class="fas fa-times"></i> Đóng</button><span class="text-white fw-bold small" id="camStatus">Sẵn sàng</span><button class="btn btn-sm btn-outline-light rounded-pill" onclick="switchCamera()"><i class="fas fa-sync"></i> Đổi Cam</button></div>
         <video id="cameraVideo" autoplay playsinline muted></video><canvas id="cameraCanvas" style="display:none"></canvas><div id="camPreviewBar" class="cam-preview-bar"></div>
         <div class="cam-footer"><div style="width:60px"></div><button class="btn-shutter" onclick="takePhoto()"></button><button class="btn btn-success fw-bold rounded-pill px-3" onclick="finishScanAndUpload()">Lưu (<span id="camCount">0</span>)</button></div>
     </div>
+
+    <div id="loadingOverlay">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3 text-white fw-bold" id="loadingText">Đang khởi động...</p>
+        <div id="networkStatus">Đang kiểm tra kết nối...</div>
+        <button id="btnReload" class="btn btn-outline-light btn-sm rounded-pill px-3" onclick="location.reload()">Tải lại trang</button>
+    </div>
+
+    <div class="modal fade" id="createLineModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Thêm Tuyến</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="text" id="newLineName" class="form-control" placeholder="Tên tuyến..."></div><div class="modal-footer"><button class="btn btn-primary" onclick="handleCreateLine()">Tạo</button></div></div></div></div>
+    <div class="modal fade" id="assignModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title">Phân công nhóm</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div id="assignUserList" class="list-group"></div></div><div class="modal-footer"><button class="btn btn-primary w-100" onclick="saveAssignment()">Lưu</button></div></div></div></div>
 
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
@@ -148,19 +170,42 @@
 
         let currentUser = null, currentUserStatus = {}, currentLineId = '', allLinesData = {}, allUsersData = {}, capturedPages = [], scanContext = {};
         
+        // --- AUTH & INIT (FIXED) ---
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
+                showLoading(true, "Đang kết nối Server...");
                 document.getElementById('loginScreen').classList.add('d-none');
-                document.getElementById('mainApp').classList.remove('d-none');
+                
+                // Monitor Connection Status
+                db.ref('.info/connected').on('value', snap => {
+                    const statusEl = document.getElementById('networkStatus');
+                    if (snap.val() === true) {
+                        statusEl.innerText = "Đã kết nối máy chủ";
+                        statusEl.classList.add('text-success');
+                    } else {
+                        statusEl.innerText = "Mất kết nối! Đang thử lại...";
+                        statusEl.classList.remove('text-success');
+                        statusEl.classList.add('text-warning');
+                        // Nếu mất kết nối quá 5s -> Hiện nút Reload
+                        setTimeout(() => document.getElementById('btnReload').style.display = 'inline-block', 5000);
+                    }
+                });
+
                 registerUser(user);
                 initDataListeners();
             } else {
                 currentUser = null;
                 document.getElementById('loginScreen').classList.remove('d-none');
                 document.getElementById('mainApp').classList.add('d-none');
+                showLoading(false);
             }
         });
+
+        function showLoading(show, text="Đang xử lý...") {
+            document.getElementById('loadingText').innerText = text;
+            document.getElementById('loadingOverlay').style.display = show ? 'block' : 'none';
+        }
 
         function registerUser(user) {
             const safeKey = user.email.replace(/\./g, '_');
@@ -175,12 +220,17 @@
         function checkAdminUI() { if(currentUser?.email === ADMIN_EMAIL) { document.getElementById('btnUserManager').classList.remove('d-none'); document.getElementById('adminControls').classList.remove('d-none'); document.getElementById('adminControls').classList.add('d-flex'); } }
 
         function initDataListeners() {
+            // [FIX 3.4] Load độc lập, không dùng Promise.all để tránh treo
+            
+            // 1. Load User Info
             db.ref('app_users').on('value', snap => {
                 allUsersData = snap.val() || {};
                 const myKey = currentUser.email.replace(/\./g, '_');
                 if (allUsersData[myKey]) {
                     currentUserStatus = allUsersData[myKey];
                     document.getElementById('menuUserName').innerText = allUsersData[myKey].real_name || currentUser.displayName;
+                    document.getElementById('menuUserEmail').innerText = currentUser.email;
+                    document.getElementById('menuUserAvatar').src = currentUser.photoURL;
                     document.getElementById('menuUserRole').innerText = getRoleName(currentUserStatus.role);
                     
                     const isBoss = ['manager', 'leader', 'deputy'].includes(currentUserStatus.role);
@@ -196,55 +246,37 @@
                 }
             });
 
+            // 2. Load Lines Data (Nặng nhất)
+            showLoading(true, "Đang tải danh sách tuyến...");
+            
+            // Timeout safety: Nếu sau 10s không tải được thì tắt loading để user không bị kẹt
+            const loadTimeout = setTimeout(() => {
+                showLoading(false);
+                alert("Mạng chậm, dữ liệu có thể chưa đầy đủ. Vui lòng đợi thêm hoặc tải lại.");
+                document.getElementById('mainApp').classList.remove('d-none');
+            }, 10000);
+
             db.ref('lines').on('value', snap => {
+                clearTimeout(loadTimeout); // Đã tải xong -> Hủy timeout
                 allLinesData = snap.val() || {};
-                // [FIX 3.3] Xóa hết logic phức tạp, gọi render trực tiếp
-                renderLineSelect(allLinesData);
+                
+                filterLines(); 
                 renderDashboard();
+                
                 if (currentLineId && allLinesData[currentLineId]) {
                     renderMobileList(allLinesData[currentLineId]);
-                } else if (!currentLineId) {
-                    document.getElementById('mobileRecordList').innerHTML = '<div class="text-center mt-5 text-muted">Vui lòng chọn tuyến dây</div>';
                 }
+                
+                // Dữ liệu đã về -> Hiện App ngay
+                showLoading(false);
+                document.getElementById('mainApp').classList.remove('d-none');
             });
         }
 
         function getRoleName(r) { if(r==='manager') return 'Lãnh đạo Đội'; if(r==='leader') return 'Tổ trưởng'; if(r==='deputy') return 'Tổ phó'; return 'Công nhân'; }
 
-        function filterLines() {
-            const keyword = document.getElementById('lineSearchInput').value.toLowerCase();
-            const filtered = {};
-            if (!keyword) { renderLineSelect(allLinesData); return; }
-            for (const [id, data] of Object.entries(allLinesData)) { 
-                if (data && data.name && data.name.toLowerCase().includes(keyword)) filtered[id] = data; 
-            }
-            renderLineSelect(filtered);
-        }
-
-        function renderLineSelect(linesToRender) {
-            const s = document.getElementById('mobileLineSelect'); 
-            const cur = s.value || currentLineId; 
-            s.innerHTML = '<option value="">-- Chọn tuyến --</option>';
-            
-            // [FIX 3.3] Fallback nếu null
-            if (!linesToRender || Object.keys(linesToRender).length === 0) {
-                // Có thể hiển thị "Không có dữ liệu"
-                return;
-            }
-
-            Object.keys(linesToRender).sort((a,b) => {
-                const nA = linesToRender[a].name || '';
-                const nB = linesToRender[b].name || '';
-                return nA.localeCompare(nB);
-            }).forEach(id => { 
-                s.innerHTML += `<option value="${id}">${linesToRender[id].name}</option>`; 
-            });
-            if (cur && linesToRender[cur]) s.value = cur;
-        }
-
-        function handleLineChange() { currentLineId = document.getElementById('mobileLineSelect').value; if(currentLineId && allLinesData[currentLineId]) renderMobileList(allLinesData[currentLineId]); else document.getElementById('mobileRecordList').innerHTML = ''; }
-        
-        // --- CÁC HÀM CÒN LẠI GIỮ NGUYÊN (CAMERA, UPLOAD, VIEW DOC) ---
+        // ... (GIỮ NGUYÊN CÁC HÀM CAMERA, UPLOAD, VIEW DOC, RENDER NHƯ V3.3) ...
+        // (Để tiết kiệm không gian, tôi chỉ liệt kê các hàm chính, logic bên trong giống hệt V3.3)
         let videoStream = null; let facingMode = 'environment'; 
         async function startCamera() {
             const video = document.getElementById('cameraVideo');
@@ -279,7 +311,7 @@
         function prepareScan(docId) {
             if(!canEditLine()) return;
             const note = document.getElementById(`note_${docId}`).value;
-            if (!note.trim()) return alert("Nhập tên tài liệu trước khi Scan!");
+            if (!note.trim()) return alert("Nhập ghi chú trước khi Scan!");
             scanContext = { lineId: currentLineId, docId, note: note.trim() };
             capturedPages = [];
             document.getElementById('camCount').innerText = "0";
@@ -302,11 +334,6 @@
                     sendToScript(base64, 'application/pdf', `SCAN_${Date.now()}.pdf`, scanContext.note, scanContext.docId);
                 } catch(e) { alert("Lỗi PDF: " + e); showLoading(false); }
             }, 500);
-        }
-
-        function showLoading(show, text="Đang xử lý...") {
-            document.getElementById('loadingText').innerText = text;
-            document.getElementById('loadingOverlay').style.display = show ? 'block' : 'none';
         }
 
         function canEditLine() {
@@ -352,6 +379,34 @@
             new bootstrap.Modal(document.getElementById('viewDocModal')).show();
         }
 
+        function filterLines() {
+            const keyword = document.getElementById('lineSearchInput').value.toLowerCase();
+            const filtered = {};
+            if (!keyword) { renderLineSelect(allLinesData); return; }
+            if (allLinesData) {
+                for (const [id, data] of Object.entries(allLinesData)) { 
+                    if (data && data.name && data.name.toLowerCase().includes(keyword)) filtered[id] = data; 
+                }
+            }
+            renderLineSelect(filtered);
+        }
+
+        function renderLineSelect(linesToRender) {
+            const s = document.getElementById('mobileLineSelect'); 
+            const cur = s.value || currentLineId; 
+            s.innerHTML = '<option value="">-- Chọn tuyến --</option>';
+            if (!linesToRender) return;
+            Object.keys(linesToRender).sort((a,b) => {
+                const nA = linesToRender[a].name || '';
+                const nB = linesToRender[b].name || '';
+                return nA.localeCompare(nB);
+            }).forEach(id => { 
+                s.innerHTML += `<option value="${id}">${linesToRender[id].name}</option>`; 
+            });
+            if (cur && linesToRender[cur]) s.value = cur;
+        }
+
+        function handleLineChange() { currentLineId = document.getElementById('mobileLineSelect').value; if(currentLineId && allLinesData[currentLineId]) renderMobileList(allLinesData[currentLineId]); else document.getElementById('mobileRecordList').innerHTML = ''; }
         function openCreateModal() { if(isBlockedUser()) return; new bootstrap.Modal(document.getElementById('createLineModal')).show(); }
         function handleCreateLine() { const name = document.getElementById('newLineName').value; if(!name.trim()) return; const newId = 'line_' + Date.now(); db.ref('lines/' + newId).set({ name, created_at: new Date().toISOString(), created_by: currentUser.email, is_locked: false }).then(() => { bootstrap.Modal.getInstance(document.getElementById('createLineModal')).hide(); document.getElementById('newLineName').value = ''; currentLineId = newId; setTimeout(() => { renderLineSelect(allLinesData); document.getElementById('mobileLineSelect').value = newId; renderMobileList({name, records:{}}); }, 300); }); }
         function isBlockedUser() { return currentUserStatus.is_blocked; }
