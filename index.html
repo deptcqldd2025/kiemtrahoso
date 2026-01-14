@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Đội QLDD - Kiểm tra hồ sơ v3.5</title>
+    <title>Đội QLDD - Kiểm tra hồ sơ v3.6</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d6efd">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon-192.png">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -16,16 +17,12 @@
     <style>
         :root { --primary-color: #0d6efd; --bg-light: #f8f9fa; }
         body { background-color: var(--bg-light); font-family: 'Segoe UI', sans-serif; overscroll-behavior-y: none; }
-        
         .app-header { background: var(--primary-color); color: white; padding: 15px; border-radius: 0 0 20px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; padding-top: max(15px, env(safe-area-inset-top)); }
         .menu-btn { font-size: 24px; cursor: pointer; color: white; background: none; border: none; }
         .fab-switch { position: fixed; bottom: 20px; right: 20px; z-index: 1000; background: #343a40; color: white; border-radius: 50px; padding: 10px 20px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        
         #loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        
         .record-card { border: none; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; overflow: hidden; }
         .record-header { background: #e9ecef; padding: 10px 15px; font-weight: bold; color: #495057; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        
         .file-item { border-bottom: 1px solid #eee; padding: 8px 10px; font-size: 14px; background: white; }
         .file-meta { font-size: 11px; color: #6c757d; display: block; margin-top: 2px; }
         .file-note { font-weight: 500; color: #0d6efd; cursor: pointer; }
@@ -35,7 +32,7 @@
         .card-content.show { display: block; }
         .upload-btn-wrapper { position: relative; overflow: hidden; display: inline-block; cursor: pointer; }
         .upload-btn-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-
+        
         /* Camera UI */
         #cameraOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 99999; display: none; flex-direction: column; }
         #cameraVideo { width: 100%; flex-grow: 1; object-fit: cover; }
@@ -47,11 +44,9 @@
         .cam-thumb-img { width: 100%; height: 100%; object-fit: cover; }
         .btn-del-thumb { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; border: none; display: flex; align-items: center; justify-content: center; }
         
-        /* [V3.5] Improved Loading */
-        #loadingOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(33, 37, 41, 0.95); z-index: 100000; text-align: center; padding-top: 40vh; color: white; }
+        /* [V3.6] Loading Fix */
+        #loadingOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(33, 37, 41, 0.98); z-index: 100000; text-align: center; padding-top: 40vh; color: white; }
         .spinner-border { width: 3rem; height: 3rem; }
-        #loadingText { margin-top: 15px; font-size: 1.1rem; }
-        #btnForceSkip { display: none; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -62,17 +57,16 @@
         <button class="btn btn-outline-dark btn-lg px-4" onclick="handleLogin()">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" class="me-2"> Đăng nhập Gmail
         </button>
-        <div class="mt-4 text-muted small">Phiên bản 3.5 (Debug Mode)</div>
-        <button class="btn btn-sm btn-link text-muted mt-2" onclick="clearCache()">Xóa Cache sửa lỗi</button>
+        <small class="mt-4 text-muted">Phiên bản 3.6 (Force Load)</small>
+        <div class="mt-3">
+            <button class="btn btn-sm btn-link text-secondary" onclick="forceClear()">Xóa Dữ liệu cũ</button>
+        </div>
     </div>
 
     <div id="loadingOverlay">
         <div class="spinner-border text-primary" role="status"></div>
-        <p id="loadingText">Đang khởi động...</p>
-        <div id="loadingDetail" class="small text-muted mb-3"></div>
-        <button id="btnForceSkip" class="btn btn-outline-light btn-sm rounded-pill px-4" onclick="forceSkipLoading()">
-            <i class="fas fa-forward"></i> Bỏ qua & Vào luôn
-        </button>
+        <p class="mt-3 fw-bold" id="loadingText">Đang tải...</p>
+        <div id="loadingSub" class="small text-muted"></div>
     </div>
 
     <div id="mainApp" class="d-none">
@@ -95,7 +89,7 @@
 
         <div class="app-header">
             <button class="menu-btn" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i class="fas fa-bars"></i></button>
-            <h6 class="m-0 fw-bold">Kiểm tra hồ sơ v3.5 <span id="headerLockStatus" class="badge bg-danger ms-2" style="display:none"><i class="fas fa-lock"></i></span></h6>
+            <h6 class="m-0 fw-bold">Kiểm tra hồ sơ v3.6 <span id="headerLockStatus" class="badge bg-danger ms-2" style="display:none"><i class="fas fa-lock"></i></span></h6>
             <div style="width: 24px;"></div>
         </div>
         <button class="fab-switch" onclick="toggleView()"><i class="fas fa-sync"></i> View</button>
@@ -103,16 +97,16 @@
         <div id="view-mobile" class="container pb-5">
             <div class="card mx-2 mb-4 shadow-sm">
                 <div class="card-body p-3">
-                    <label class="form-label small text-muted fw-bold">TÌM & CHỌN TUYẾN:</label>
+                    <label class="form-label small text-muted fw-bold">CHỌN TUYẾN DÂY:</label>
                     <div class="input-group mb-2">
                         <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
                         <input type="text" id="lineSearchInput" class="form-control border-start-0" placeholder="Nhập tên tuyến..." oninput="filterLines()">
                     </div>
                     <div class="input-group">
                         <select id="mobileLineSelect" class="form-select" onchange="handleLineChange()">
-                            <option value="">-- Chọn tuyến --</option>
+                            <option value="">-- Đang tải dữ liệu... --</option>
                         </select>
-                        <button id="btnAssign" class="btn btn-primary d-none" onclick="openAssignModal()" title="Phân công"><i class="fas fa-users"></i></button>
+                        <button id="btnAssign" class="btn btn-primary d-none" onclick="openAssignModal()"><i class="fas fa-users"></i></button>
                         <button id="btnAddLine" class="btn btn-success d-none" onclick="openCreateModal()"><i class="fas fa-plus"></i></button>
                     </div>
                     <div id="adminControls" class="mt-2 d-none d-flex justify-content-end gap-2">
@@ -133,7 +127,7 @@
         </div>
     </div>
 
-    <div class="modal fade" id="viewDocModal" tabindex="-1"><div class="modal-dialog modal-fullscreen"><div class="modal-content"><div class="modal-header bg-dark text-white p-2"><h6 class="modal-title m-0"><i class="fas fa-file-alt"></i> Xem Tài Liệu</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-0" style="background: #333;"><iframe id="docFrame" style="width:100%; height:100%; border:none;" allow="autoplay"></iframe></div></div></div></div>
+    <div class="modal fade" id="viewDocModal" tabindex="-1"><div class="modal-dialog modal-fullscreen"><div class="modal-content"><div class="modal-header bg-dark text-white p-2"><h6 class="modal-title m-0">Xem Tài Liệu</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-0" style="background: #333;"><iframe id="docFrame" style="width:100%; height:100%; border:none;" allow="autoplay"></iframe></div></div></div></div>
     <div id="cameraOverlay"><div class="cam-header"><button class="btn btn-sm btn-outline-light rounded-pill" onclick="closeCamera()">Đóng</button><span class="text-white small">Camera</span><button class="btn btn-sm btn-outline-light rounded-pill" onclick="switchCamera()">Đổi Cam</button></div><video id="cameraVideo" autoplay playsinline muted></video><canvas id="cameraCanvas" style="display:none"></canvas><div id="camPreviewBar" class="cam-preview-bar"></div><div class="cam-footer"><div style="width:60px"></div><button class="btn-shutter" onclick="takePhoto()"></button><button class="btn btn-success fw-bold rounded-pill px-3" onclick="finishScanAndUpload()">Lưu (<span id="camCount">0</span>)</button></div></div>
     <div class="modal fade" id="createLineModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Thêm Tuyến</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="text" id="newLineName" class="form-control" placeholder="Tên tuyến..."></div><div class="modal-footer"><button class="btn btn-primary" onclick="handleCreateLine()">Tạo</button></div></div></div></div>
     <div class="modal fade" id="assignModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title">Phân công nhóm</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div id="assignUserList" class="list-group"></div></div><div class="modal-footer"><button class="btn btn-primary w-100" onclick="saveAssignment()">Lưu</button></div></div></div></div>
@@ -147,7 +141,9 @@
     <script>
         if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); }); }
 
+        // [QUAN TRỌNG] HÃY THAY ĐỔI CONFIG NẾU CẦN THIẾT
         const firebaseConfig = { apiKey: "AIzaSyCzWjfcD5Dgq7V-i2izb9tKLR6QM6qWPQo", authDomain: "tavietnam-78ae8.firebaseapp.com", projectId: "tavietnam-78ae8", storageBucket: "tavietnam-78ae8.firebasestorage.app", messagingSenderId: "670121705534", appId: "1:670121705534:web:1027ad98550573ad37116f" };
+        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
@@ -161,23 +157,22 @@
         };
 
         let currentUser = null, currentUserStatus = {}, currentLineId = '', allLinesData = {}, allUsersData = {}, capturedPages = [], scanContext = {};
-        
-        // [FIX V3.5] Safe Loading System
-        let loadingTimeout;
+        let isDataLoaded = false;
 
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
-                showLoading(true, "Đang kết nối Server...");
+                showLoading(true, "Đang tải dữ liệu...");
                 document.getElementById('loginScreen').classList.add('d-none');
                 
-                // Set Timeout Safety (15s)
-                clearTimeout(loadingTimeout);
-                loadingTimeout = setTimeout(() => {
-                    document.getElementById('loadingText').innerText = "Kết nối chậm...";
-                    document.getElementById('loadingDetail').innerText = "Vui lòng kiểm tra mạng";
-                    document.getElementById('btnForceSkip').style.display = 'inline-block';
-                }, 15000);
+                // [FIX V3.6] CƯỠNG CHẾ VÀO APP SAU 5 GIÂY (Safety Timeout)
+                setTimeout(() => {
+                    if (!isDataLoaded) {
+                        showLoading(false);
+                        document.getElementById('mainApp').classList.remove('d-none');
+                        // alert("Kết nối chậm. Dữ liệu có thể chưa hiển thị đầy đủ.");
+                    }
+                }, 5000);
 
                 registerUser(user);
                 initDataListeners();
@@ -190,49 +185,29 @@
         });
 
         function showLoading(show, text="Đang xử lý...") {
-            const el = document.getElementById('loadingOverlay');
             document.getElementById('loadingText').innerText = text;
-            if(show) {
-                el.style.display = 'block';
-            } else {
-                el.style.display = 'none';
-                clearTimeout(loadingTimeout);
-                document.getElementById('btnForceSkip').style.display = 'none';
-            }
+            document.getElementById('loadingOverlay').style.display = show ? 'block' : 'none';
         }
 
-        function forceSkipLoading() {
-            showLoading(false);
-            document.getElementById('mainApp').classList.remove('d-none');
-            alert("Đã bỏ qua màn hình chờ. Một số dữ liệu có thể chưa hiển thị ngay.");
-        }
-
-        function clearCache() {
-            if ('caches' in window) {
-                caches.keys().then(names => {
-                    names.forEach(name => caches.delete(name));
-                    alert("Đã xóa Cache. Ứng dụng sẽ tải lại.");
-                    window.location.reload(true);
-                });
-            } else {
-                window.location.reload(true);
-            }
+        function forceClear() {
+            if('caches' in window) caches.keys().then(names => { names.forEach(name => caches.delete(name)); });
+            window.location.reload(true);
         }
 
         function registerUser(user) {
             const safeKey = user.email.replace(/\./g, '_');
-            db.ref('app_users/' + safeKey).transaction(d => {
-                if(d) return {...d, last_login: new Date().toISOString(), photo: user.photoURL};
-                else return { email: user.email, real_name: user.displayName, photo: user.photoURL, role: 'worker', is_blocked: false, last_login: new Date().toISOString() };
+            db.ref('app_users/' + safeKey).update({ 
+                email: user.email, 
+                last_login: new Date().toISOString(), 
+                photo: user.photoURL 
             });
         }
 
         function handleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
         function handleLogout() { auth.signOut().then(() => location.reload()); }
-        function checkAdminUI() { if(currentUser?.email === ADMIN_EMAIL) { document.getElementById('btnUserManager').classList.remove('d-none'); document.getElementById('adminControls').classList.remove('d-none'); document.getElementById('adminControls').classList.add('d-flex'); } }
-
+        
         function initDataListeners() {
-            // [V3.5] Direct Listener - No Promise Blocking
+            // Monitor Users
             db.ref('app_users').on('value', snap => {
                 allUsersData = snap.val() || {};
                 const myKey = currentUser.email.replace(/\./g, '_');
@@ -244,20 +219,14 @@
                     document.getElementById('menuUserRole').innerText = getRoleName(currentUserStatus.role);
                     
                     const isBoss = ['manager', 'leader', 'deputy'].includes(currentUserStatus.role);
-                    if (isBoss) {
-                        document.getElementById('btnAddLine').classList.remove('d-none');
-                        document.getElementById('btnAssign').classList.remove('d-none');
-                    }
-                    if (currentUserStatus.role === 'manager') {
-                        document.getElementById('btnUserManager').classList.remove('d-none');
-                        document.getElementById('adminControls').classList.remove('d-none');
-                        document.getElementById('adminControls').classList.add('d-flex');
-                    }
+                    if (isBoss) { document.getElementById('btnAddLine').classList.remove('d-none'); document.getElementById('btnAssign').classList.remove('d-none'); }
+                    if (currentUserStatus.role === 'manager') { document.getElementById('btnUserManager').classList.remove('d-none'); document.getElementById('adminControls').classList.remove('d-none'); document.getElementById('adminControls').classList.add('d-flex'); }
                 }
             });
 
+            // Monitor Lines [CRITICAL FIX]
             db.ref('lines').on('value', snap => {
-                showLoading(true, "Đang tải danh sách...");
+                isDataLoaded = true; // Đánh dấu đã tải xong
                 allLinesData = snap.val() || {};
                 
                 filterLines(); 
@@ -265,148 +234,40 @@
                 
                 if (currentLineId && allLinesData[currentLineId]) {
                     renderMobileList(allLinesData[currentLineId]);
-                } else if (!currentLineId) {
-                    document.getElementById('mobileRecordList').innerHTML = '<div class="text-center mt-5 text-muted">Vui lòng chọn tuyến dây</div>';
+                } else {
+                    document.getElementById('mobileRecordList').innerHTML = '<div class="text-center mt-5 text-muted small fst-italic">Vui lòng chọn tuyến dây để xem</div>';
                 }
                 
-                // Data Arrived -> Show App
+                // Tắt loading và hiện App ngay khi có dữ liệu
                 showLoading(false);
+                document.getElementById('mainApp').classList.remove('d-none');
+            }, (error) => {
+                // Bắt lỗi permission denied
+                showLoading(false);
+                alert("Lỗi tải dữ liệu: " + error.code + ". Hãy kiểm tra Rules trên Firebase.");
                 document.getElementById('mainApp').classList.remove('d-none');
             });
         }
 
+        function checkAdminUI() { if(currentUser?.email === ADMIN_EMAIL) { document.getElementById('btnUserManager').classList.remove('d-none'); document.getElementById('adminControls').classList.remove('d-none'); document.getElementById('adminControls').classList.add('d-flex'); } }
         function getRoleName(r) { if(r==='manager') return 'Lãnh đạo Đội'; if(r==='leader') return 'Tổ trưởng'; if(r==='deputy') return 'Tổ phó'; return 'Công nhân'; }
 
-        // ... (Keep existing functions for Camera, Upload, Render) ...
+        // [GIỮ NGUYÊN PHẦN LOGIC CAMERA, UPLOAD, RENDER]
         let videoStream = null; let facingMode = 'environment'; 
-        async function startCamera() {
-            const video = document.getElementById('cameraVideo');
-            if(videoStream) videoStream.getTracks().forEach(t => t.stop());
-            try {
-                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } } });
-                video.srcObject = videoStream;
-                document.getElementById('cameraOverlay').style.display = 'flex';
-                document.getElementById('camStatus').innerText = "Đã bật Camera";
-            } catch (err) { alert("Lỗi Camera: " + err); document.getElementById('cameraOverlay').style.display = 'none'; }
-        }
+        async function startCamera() { const video = document.getElementById('cameraVideo'); if(videoStream) videoStream.getTracks().forEach(t => t.stop()); try { videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } } }); video.srcObject = videoStream; document.getElementById('cameraOverlay').style.display = 'flex'; document.getElementById('camStatus').innerText = "Đã bật Camera"; } catch (err) { alert("Lỗi Camera: " + err); document.getElementById('cameraOverlay').style.display = 'none'; } }
         function switchCamera() { facingMode = (facingMode === 'environment') ? 'user' : 'environment'; startCamera(); }
-        function takePhoto() {
-            const video = document.getElementById('cameraVideo');
-            const canvas = document.getElementById('cameraCanvas');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0);
-            capturedPages.push(canvas.toDataURL('image/jpeg', 0.7));
-            renderCamThumbs();
-            document.getElementById('camCount').innerText = capturedPages.length;
-            const overlay = document.getElementById('cameraOverlay'); overlay.style.opacity = 0.5; setTimeout(() => overlay.style.opacity = 1, 100);
-        }
-        function renderCamThumbs() {
-            const bar = document.getElementById('camPreviewBar');
-            bar.style.display = capturedPages.length ? 'block' : 'none';
-            bar.innerHTML = '';
-            capturedPages.forEach((img, idx) => { bar.innerHTML += `<div class="cam-thumb-box"><img src="${img}" class="cam-thumb-img"><button class="btn-del-thumb" onclick="removePage(${idx})">x</button></div>`; });
-        }
+        function takePhoto() { const video = document.getElementById('cameraVideo'); const canvas = document.getElementById('cameraCanvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; const ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0); capturedPages.push(canvas.toDataURL('image/jpeg', 0.7)); renderCamThumbs(); document.getElementById('camCount').innerText = capturedPages.length; const overlay = document.getElementById('cameraOverlay'); overlay.style.opacity = 0.5; setTimeout(() => overlay.style.opacity = 1, 100); }
+        function renderCamThumbs() { const bar = document.getElementById('camPreviewBar'); bar.style.display = capturedPages.length ? 'block' : 'none'; bar.innerHTML = ''; capturedPages.forEach((img, idx) => { bar.innerHTML += `<div class="cam-thumb-box"><img src="${img}" class="cam-thumb-img"><button class="btn-del-thumb" onclick="removePage(${idx})">x</button></div>`; }); }
         function removePage(idx) { capturedPages.splice(idx, 1); renderCamThumbs(); document.getElementById('camCount').innerText = capturedPages.length; }
         function closeCamera() { if(videoStream) videoStream.getTracks().forEach(t => t.stop()); document.getElementById('cameraOverlay').style.display = 'none'; }
-
-        function prepareScan(docId) {
-            if(!canEditLine()) return;
-            const note = document.getElementById(`note_${docId}`).value;
-            if (!note.trim()) return alert("Nhập ghi chú trước khi Scan!");
-            scanContext = { lineId: currentLineId, docId, note: note.trim() };
-            capturedPages = [];
-            document.getElementById('camCount').innerText = "0";
-            renderCamThumbs();
-            startCamera();
-        }
-
-        function finishScanAndUpload() {
-            if(capturedPages.length === 0) return alert("Chưa chụp ảnh nào!");
-            if (!window.jspdf) { alert("Đang tải thư viện PDF..."); return; }
-            closeCamera();
-            showLoading(true, "Đang tạo PDF...");
-            setTimeout(() => {
-                try {
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF('p', 'mm', 'a4');
-                    const pw = doc.internal.pageSize.getWidth();
-                    capturedPages.forEach((img, i) => { if(i > 0) doc.addPage(); const p = doc.getImageProperties(img); doc.addImage(img, 'JPEG', 10, 10, pw - 20, (p.height * (pw - 20)) / p.width); });
-                    const base64 = doc.output('datauristring').split(',')[1];
-                    sendToScript(base64, 'application/pdf', `SCAN_${Date.now()}.pdf`, scanContext.note, scanContext.docId);
-                } catch(e) { alert("Lỗi PDF: " + e); showLoading(false); }
-            }, 500);
-        }
-
-        function canEditLine() {
-            if (currentUserStatus.is_blocked) return false;
-            const role = currentUserStatus.role || 'worker';
-            if (['manager', 'leader', 'deputy'].includes(role)) { if (allLinesData[currentLineId]?.is_locked && role !== 'manager') return false; return true; }
-            const line = allLinesData[currentLineId];
-            if (line.is_locked) return false;
-            const safeEmail = currentUser.email.replace(/\./g, '_');
-            if (line.assigned_to && line.assigned_to[safeEmail]) return true;
-            return false;
-        }
-
-        function sendToScript(b64, type, name, note, id) {
-            showLoading(true, "Đang gửi dữ liệu...");
-            fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ base64: b64, mimeType: type, filename: name }) })
-            .then(r => r.json())
-            .then(d => {
-                if (d.status === 'success') {
-                    db.ref(`lines/${currentLineId}/records/${id}/files`).push({ link: d.url, note: note, created_at: new Date().toISOString(), user: currentUser.email });
-                    alert("Thành công!"); document.getElementById(`note_${id}`).value = '';
-                } else alert("Lỗi Server: " + d.message);
-            })
-            .catch(e => alert("Lỗi Mạng: " + e))
-            .finally(() => showLoading(false));
-        }
-
-        function handleUpload(input, docId) {
-            if(!canEditLine()) { input.value=''; return; }
-            const file=input.files[0], note=document.getElementById(`note_${docId}`).value;
-            if(!file || !note.trim()) { input.value=''; return alert("Nhập tên tài liệu!"); }
-            showLoading(true, "Đang xử lý...");
-            const r=new FileReader(); r.readAsDataURL(file); r.onload=e=>sendToScript(e.target.result.split(',')[1], file.type, `${currentLineId}_${docId}_${file.name}`, note, docId);
-        }
-
-        function viewDocument(link) {
-            let previewLink = link;
-            if (link.includes('drive.google.com')) {
-                if(link.includes('/view')) previewLink = link.replace(/\/view.*/, '/preview');
-                else previewLink = link + '/preview';
-            }
-            document.getElementById('docFrame').src = previewLink;
-            new bootstrap.Modal(document.getElementById('viewDocModal')).show();
-        }
-
-        function filterLines() {
-            const keyword = document.getElementById('lineSearchInput').value.toLowerCase();
-            const filtered = {};
-            if (!keyword) { renderLineSelect(allLinesData); return; }
-            if (allLinesData) {
-                for (const [id, data] of Object.entries(allLinesData)) { 
-                    if (data && data.name && data.name.toLowerCase().includes(keyword)) filtered[id] = data; 
-                }
-            }
-            renderLineSelect(filtered);
-        }
-
-        function renderLineSelect(linesToRender) {
-            const s = document.getElementById('mobileLineSelect'); 
-            const cur = s.value || currentLineId; 
-            s.innerHTML = '<option value="">-- Chọn tuyến --</option>';
-            if (!linesToRender) return;
-            Object.keys(linesToRender).sort((a,b) => {
-                const nA = linesToRender[a].name || '';
-                const nB = linesToRender[b].name || '';
-                return nA.localeCompare(nB);
-            }).forEach(id => { 
-                s.innerHTML += `<option value="${id}">${linesToRender[id].name}</option>`; 
-            });
-            if (cur && linesToRender[cur]) s.value = cur;
-        }
-
+        function prepareScan(docId) { if(!canEditLine()) return; const note = document.getElementById(`note_${docId}`).value; if (!note.trim()) return alert("Nhập ghi chú trước khi Scan!"); scanContext = { lineId: currentLineId, docId, note: note.trim() }; capturedPages = []; document.getElementById('camCount').innerText = "0"; renderCamThumbs(); startCamera(); }
+        function finishScanAndUpload() { if(capturedPages.length === 0) return alert("Chưa chụp ảnh nào!"); if (!window.jspdf) { alert("Đang tải thư viện PDF..."); return; } closeCamera(); showLoading(true, "Đang tạo PDF..."); setTimeout(() => { try { const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4'); const pw = doc.internal.pageSize.getWidth(); capturedPages.forEach((img, i) => { if(i > 0) doc.addPage(); const p = doc.getImageProperties(img); doc.addImage(img, 'JPEG', 10, 10, pw - 20, (p.height * (pw - 20)) / p.width); }); const base64 = doc.output('datauristring').split(',')[1]; sendToScript(base64, 'application/pdf', `SCAN_${Date.now()}.pdf`, scanContext.note, scanContext.docId); } catch(e) { alert("Lỗi tạo PDF: " + e); showLoading(false); } }, 500); }
+        function canEditLine() { if (currentUserStatus.is_blocked) return false; const role = currentUserStatus.role || 'worker'; if (['manager', 'leader', 'deputy'].includes(role)) { if (allLinesData[currentLineId]?.is_locked && role !== 'manager') return false; return true; } const line = allLinesData[currentLineId]; if (line.is_locked) return false; const safeEmail = currentUser.email.replace(/\./g, '_'); if (line.assigned_to && line.assigned_to[safeEmail]) return true; return false; }
+        function sendToScript(b64, type, name, note, id) { showLoading(true, "Đang gửi dữ liệu..."); fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ base64: b64, mimeType: type, filename: name }) }).then(r => r.json()).then(d => { if (d.status === 'success') { db.ref(`lines/${currentLineId}/records/${id}/files`).push({ link: d.url, note: note, created_at: new Date().toISOString(), user: currentUser.email }); alert("Thành công!"); document.getElementById(`note_${id}`).value = ''; } else alert("Lỗi Server: " + d.message); }).catch(e => alert("Lỗi Mạng: " + e)).finally(() => showLoading(false)); }
+        function handleUpload(input, docId) { if(!canEditLine()) { input.value=''; return; } const file=input.files[0], note=document.getElementById(`note_${docId}`).value; if(!file || !note.trim()) { input.value=''; return alert("Nhập tên tài liệu!"); } showLoading(true, "Đang xử lý..."); const r=new FileReader(); r.readAsDataURL(file); r.onload=e=>sendToScript(e.target.result.split(',')[1], file.type, `${currentLineId}_${docId}_${file.name}`, note, docId); }
+        function viewDocument(link) { let previewLink = link; if (link.includes('drive.google.com')) { if(link.includes('/view')) previewLink = link.replace(/\/view.*/, '/preview'); else previewLink = link + '/preview'; } document.getElementById('docFrame').src = previewLink; new bootstrap.Modal(document.getElementById('viewDocModal')).show(); }
+        function filterLines() { const keyword = document.getElementById('lineSearchInput').value.toLowerCase(); const filtered = {}; if (!keyword) { renderLineSelect(allLinesData); return; } if (allLinesData) { for (const [id, data] of Object.entries(allLinesData)) { if (data && data.name && data.name.toLowerCase().includes(keyword)) filtered[id] = data; } } renderLineSelect(filtered); }
+        function renderLineSelect(linesToRender) { const s = document.getElementById('mobileLineSelect'); const cur = s.value || currentLineId; s.innerHTML = '<option value="">-- Chọn tuyến --</option>'; if (!linesToRender) return; Object.keys(linesToRender).sort((a,b) => { const nA = linesToRender[a].name || ''; const nB = linesToRender[b].name || ''; return nA.localeCompare(nB); }).forEach(id => { s.innerHTML += `<option value="${id}">${linesToRender[id].name}</option>`; }); if (cur && linesToRender[cur]) s.value = cur; }
         function handleLineChange() { currentLineId = document.getElementById('mobileLineSelect').value; if(currentLineId && allLinesData[currentLineId]) renderMobileList(allLinesData[currentLineId]); else document.getElementById('mobileRecordList').innerHTML = ''; }
         function openCreateModal() { if(isBlockedUser()) return; new bootstrap.Modal(document.getElementById('createLineModal')).show(); }
         function handleCreateLine() { const name = document.getElementById('newLineName').value; if(!name.trim()) return; const newId = 'line_' + Date.now(); db.ref('lines/' + newId).set({ name, created_at: new Date().toISOString(), created_by: currentUser.email, is_locked: false }).then(() => { bootstrap.Modal.getInstance(document.getElementById('createLineModal')).hide(); document.getElementById('newLineName').value = ''; currentLineId = newId; setTimeout(() => { renderLineSelect(allLinesData); document.getElementById('mobileLineSelect').value = newId; renderMobileList({name, records:{}}); }, 300); }); }
