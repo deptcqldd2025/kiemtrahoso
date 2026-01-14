@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Đội QLDD - Kiểm tra hồ sơ v3.4</title>
+    <title>Đội QLDD - Kiểm tra hồ sơ v3.5</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d6efd">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon-192.png">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -30,8 +29,6 @@
         .file-item { border-bottom: 1px solid #eee; padding: 8px 10px; font-size: 14px; background: white; }
         .file-meta { font-size: 11px; color: #6c757d; display: block; margin-top: 2px; }
         .file-note { font-weight: 500; color: #0d6efd; cursor: pointer; }
-        .file-note:hover { text-decoration: underline; }
-        
         .status-no-record { background: #fff3cd; color: #856404; padding: 5px 10px; font-size: 13px; border-bottom: 1px solid #ffeeba; }
         .readonly-mode .action-bar, .readonly-mode .btn-delete-file { display: none !important; }
         .card-content { display: none; }
@@ -50,11 +47,11 @@
         .cam-thumb-img { width: 100%; height: 100%; object-fit: cover; }
         .btn-del-thumb { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; border: none; display: flex; align-items: center; justify-content: center; }
         
-        /* [IMPROVED] Loading Screen */
-        #loadingOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100000; text-align: center; padding-top: 40vh; }
+        /* [V3.5] Improved Loading */
+        #loadingOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(33, 37, 41, 0.95); z-index: 100000; text-align: center; padding-top: 40vh; color: white; }
         .spinner-border { width: 3rem; height: 3rem; }
-        #networkStatus { font-size: 12px; color: #aaa; margin-top: 15px; }
-        #btnReload { display: none; margin-top: 20px; }
+        #loadingText { margin-top: 15px; font-size: 1.1rem; }
+        #btnForceSkip { display: none; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -65,11 +62,20 @@
         <button class="btn btn-outline-dark btn-lg px-4" onclick="handleLogin()">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" class="me-2"> Đăng nhập Gmail
         </button>
-        <small class="mt-4 text-muted">Phiên bản 3.4 (Fast Load)</small>
+        <div class="mt-4 text-muted small">Phiên bản 3.5 (Debug Mode)</div>
+        <button class="btn btn-sm btn-link text-muted mt-2" onclick="clearCache()">Xóa Cache sửa lỗi</button>
+    </div>
+
+    <div id="loadingOverlay">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p id="loadingText">Đang khởi động...</p>
+        <div id="loadingDetail" class="small text-muted mb-3"></div>
+        <button id="btnForceSkip" class="btn btn-outline-light btn-sm rounded-pill px-4" onclick="forceSkipLoading()">
+            <i class="fas fa-forward"></i> Bỏ qua & Vào luôn
+        </button>
     </div>
 
     <div id="mainApp" class="d-none">
-        
         <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu">
             <div class="offcanvas-header bg-primary text-white"><h5 class="offcanvas-title">Menu</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button></div>
             <div class="offcanvas-body">
@@ -82,7 +88,6 @@
                 <div class="list-group list-group-flush">
                     <a href="huong_dan.html" target="_blank" class="list-group-item list-group-item-action"><i class="fas fa-book me-2 text-primary"></i> Hướng dẫn sử dụng</a>
                     <a href="chart.html" class="list-group-item list-group-item-action"><i class="fas fa-chart-line me-2 text-warning"></i> Thống kê & Báo cáo</a>
-                    <button class="list-group-item list-group-item-action" onclick="alert('V3.4: Tối ưu kết nối mạng')">Thông tin Phiên bản 3.4</button>
                     <a id="btnUserManager" href="user.html" class="list-group-item list-group-item-action d-none text-primary fw-bold mt-2"><i class="fas fa-users-cog"></i> Quản lý Nhân sự (Admin)</a>
                 </div>
             </div>
@@ -90,7 +95,7 @@
 
         <div class="app-header">
             <button class="menu-btn" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i class="fas fa-bars"></i></button>
-            <h6 class="m-0 fw-bold">Kiểm tra hồ sơ v3.4 <span id="headerLockStatus" class="badge bg-danger ms-2" style="display:none"><i class="fas fa-lock"></i></span></h6>
+            <h6 class="m-0 fw-bold">Kiểm tra hồ sơ v3.5 <span id="headerLockStatus" class="badge bg-danger ms-2" style="display:none"><i class="fas fa-lock"></i></span></h6>
             <div style="width: 24px;"></div>
         </div>
         <button class="fab-switch" onclick="toggleView()"><i class="fas fa-sync"></i> View</button>
@@ -105,7 +110,7 @@
                     </div>
                     <div class="input-group">
                         <select id="mobileLineSelect" class="form-select" onchange="handleLineChange()">
-                            <option value="">-- Đang tải dữ liệu... --</option>
+                            <option value="">-- Chọn tuyến --</option>
                         </select>
                         <button id="btnAssign" class="btn btn-primary d-none" onclick="openAssignModal()" title="Phân công"><i class="fas fa-users"></i></button>
                         <button id="btnAddLine" class="btn btn-success d-none" onclick="openCreateModal()"><i class="fas fa-plus"></i></button>
@@ -118,7 +123,7 @@
                 </div>
             </div>
             <div id="mobileRecordList" class="px-2 pb-5">
-                <div class="text-center mt-5 text-muted small fst-italic">Vui lòng chọn tuyến dây để xem hồ sơ</div>
+                <div class="text-center mt-5 text-muted small">Vui lòng chọn tuyến dây</div>
             </div>
         </div>
 
@@ -129,20 +134,7 @@
     </div>
 
     <div class="modal fade" id="viewDocModal" tabindex="-1"><div class="modal-dialog modal-fullscreen"><div class="modal-content"><div class="modal-header bg-dark text-white p-2"><h6 class="modal-title m-0"><i class="fas fa-file-alt"></i> Xem Tài Liệu</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-0" style="background: #333;"><iframe id="docFrame" style="width:100%; height:100%; border:none;" allow="autoplay"></iframe></div></div></div></div>
-
-    <div id="cameraOverlay">
-        <div class="cam-header"><button class="btn btn-sm btn-outline-light rounded-pill" onclick="closeCamera()"><i class="fas fa-times"></i> Đóng</button><span class="text-white fw-bold small" id="camStatus">Sẵn sàng</span><button class="btn btn-sm btn-outline-light rounded-pill" onclick="switchCamera()"><i class="fas fa-sync"></i> Đổi Cam</button></div>
-        <video id="cameraVideo" autoplay playsinline muted></video><canvas id="cameraCanvas" style="display:none"></canvas><div id="camPreviewBar" class="cam-preview-bar"></div>
-        <div class="cam-footer"><div style="width:60px"></div><button class="btn-shutter" onclick="takePhoto()"></button><button class="btn btn-success fw-bold rounded-pill px-3" onclick="finishScanAndUpload()">Lưu (<span id="camCount">0</span>)</button></div>
-    </div>
-
-    <div id="loadingOverlay">
-        <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-3 text-white fw-bold" id="loadingText">Đang khởi động...</p>
-        <div id="networkStatus">Đang kiểm tra kết nối...</div>
-        <button id="btnReload" class="btn btn-outline-light btn-sm rounded-pill px-3" onclick="location.reload()">Tải lại trang</button>
-    </div>
-
+    <div id="cameraOverlay"><div class="cam-header"><button class="btn btn-sm btn-outline-light rounded-pill" onclick="closeCamera()">Đóng</button><span class="text-white small">Camera</span><button class="btn btn-sm btn-outline-light rounded-pill" onclick="switchCamera()">Đổi Cam</button></div><video id="cameraVideo" autoplay playsinline muted></video><canvas id="cameraCanvas" style="display:none"></canvas><div id="camPreviewBar" class="cam-preview-bar"></div><div class="cam-footer"><div style="width:60px"></div><button class="btn-shutter" onclick="takePhoto()"></button><button class="btn btn-success fw-bold rounded-pill px-3" onclick="finishScanAndUpload()">Lưu (<span id="camCount">0</span>)</button></div></div>
     <div class="modal fade" id="createLineModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Thêm Tuyến</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="text" id="newLineName" class="form-control" placeholder="Tên tuyến..."></div><div class="modal-footer"><button class="btn btn-primary" onclick="handleCreateLine()">Tạo</button></div></div></div></div>
     <div class="modal fade" id="assignModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title">Phân công nhóm</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div id="assignUserList" class="list-group"></div></div><div class="modal-footer"><button class="btn btn-primary w-100" onclick="saveAssignment()">Lưu</button></div></div></div></div>
 
@@ -170,27 +162,22 @@
 
         let currentUser = null, currentUserStatus = {}, currentLineId = '', allLinesData = {}, allUsersData = {}, capturedPages = [], scanContext = {};
         
-        // --- AUTH & INIT (FIXED) ---
+        // [FIX V3.5] Safe Loading System
+        let loadingTimeout;
+
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
                 showLoading(true, "Đang kết nối Server...");
                 document.getElementById('loginScreen').classList.add('d-none');
                 
-                // Monitor Connection Status
-                db.ref('.info/connected').on('value', snap => {
-                    const statusEl = document.getElementById('networkStatus');
-                    if (snap.val() === true) {
-                        statusEl.innerText = "Đã kết nối máy chủ";
-                        statusEl.classList.add('text-success');
-                    } else {
-                        statusEl.innerText = "Mất kết nối! Đang thử lại...";
-                        statusEl.classList.remove('text-success');
-                        statusEl.classList.add('text-warning');
-                        // Nếu mất kết nối quá 5s -> Hiện nút Reload
-                        setTimeout(() => document.getElementById('btnReload').style.display = 'inline-block', 5000);
-                    }
-                });
+                // Set Timeout Safety (15s)
+                clearTimeout(loadingTimeout);
+                loadingTimeout = setTimeout(() => {
+                    document.getElementById('loadingText').innerText = "Kết nối chậm...";
+                    document.getElementById('loadingDetail').innerText = "Vui lòng kiểm tra mạng";
+                    document.getElementById('btnForceSkip').style.display = 'inline-block';
+                }, 15000);
 
                 registerUser(user);
                 initDataListeners();
@@ -203,8 +190,33 @@
         });
 
         function showLoading(show, text="Đang xử lý...") {
+            const el = document.getElementById('loadingOverlay');
             document.getElementById('loadingText').innerText = text;
-            document.getElementById('loadingOverlay').style.display = show ? 'block' : 'none';
+            if(show) {
+                el.style.display = 'block';
+            } else {
+                el.style.display = 'none';
+                clearTimeout(loadingTimeout);
+                document.getElementById('btnForceSkip').style.display = 'none';
+            }
+        }
+
+        function forceSkipLoading() {
+            showLoading(false);
+            document.getElementById('mainApp').classList.remove('d-none');
+            alert("Đã bỏ qua màn hình chờ. Một số dữ liệu có thể chưa hiển thị ngay.");
+        }
+
+        function clearCache() {
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => caches.delete(name));
+                    alert("Đã xóa Cache. Ứng dụng sẽ tải lại.");
+                    window.location.reload(true);
+                });
+            } else {
+                window.location.reload(true);
+            }
         }
 
         function registerUser(user) {
@@ -220,9 +232,7 @@
         function checkAdminUI() { if(currentUser?.email === ADMIN_EMAIL) { document.getElementById('btnUserManager').classList.remove('d-none'); document.getElementById('adminControls').classList.remove('d-none'); document.getElementById('adminControls').classList.add('d-flex'); } }
 
         function initDataListeners() {
-            // [FIX 3.4] Load độc lập, không dùng Promise.all để tránh treo
-            
-            // 1. Load User Info
+            // [V3.5] Direct Listener - No Promise Blocking
             db.ref('app_users').on('value', snap => {
                 allUsersData = snap.val() || {};
                 const myKey = currentUser.email.replace(/\./g, '_');
@@ -246,18 +256,8 @@
                 }
             });
 
-            // 2. Load Lines Data (Nặng nhất)
-            showLoading(true, "Đang tải danh sách tuyến...");
-            
-            // Timeout safety: Nếu sau 10s không tải được thì tắt loading để user không bị kẹt
-            const loadTimeout = setTimeout(() => {
-                showLoading(false);
-                alert("Mạng chậm, dữ liệu có thể chưa đầy đủ. Vui lòng đợi thêm hoặc tải lại.");
-                document.getElementById('mainApp').classList.remove('d-none');
-            }, 10000);
-
             db.ref('lines').on('value', snap => {
-                clearTimeout(loadTimeout); // Đã tải xong -> Hủy timeout
+                showLoading(true, "Đang tải danh sách...");
                 allLinesData = snap.val() || {};
                 
                 filterLines(); 
@@ -265,9 +265,11 @@
                 
                 if (currentLineId && allLinesData[currentLineId]) {
                     renderMobileList(allLinesData[currentLineId]);
+                } else if (!currentLineId) {
+                    document.getElementById('mobileRecordList').innerHTML = '<div class="text-center mt-5 text-muted">Vui lòng chọn tuyến dây</div>';
                 }
                 
-                // Dữ liệu đã về -> Hiện App ngay
+                // Data Arrived -> Show App
                 showLoading(false);
                 document.getElementById('mainApp').classList.remove('d-none');
             });
@@ -275,8 +277,7 @@
 
         function getRoleName(r) { if(r==='manager') return 'Lãnh đạo Đội'; if(r==='leader') return 'Tổ trưởng'; if(r==='deputy') return 'Tổ phó'; return 'Công nhân'; }
 
-        // ... (GIỮ NGUYÊN CÁC HÀM CAMERA, UPLOAD, VIEW DOC, RENDER NHƯ V3.3) ...
-        // (Để tiết kiệm không gian, tôi chỉ liệt kê các hàm chính, logic bên trong giống hệt V3.3)
+        // ... (Keep existing functions for Camera, Upload, Render) ...
         let videoStream = null; let facingMode = 'environment'; 
         async function startCamera() {
             const video = document.getElementById('cameraVideo');
