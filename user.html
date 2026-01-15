@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Nhân Sự v4.5</title>
+    <title>Quản Lý Nhân Sự v4.6</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -37,7 +37,7 @@
             </div>
             <div class="col-12 text-muted small d-flex justify-content-between">
                 <span>Tổng số: <b id="totalUsers">0</b></span>
-                <span>Version 4.5</span>
+                <span>Version 4.6 (Sorted)</span>
             </div>
         </div>
         <div id="userListContainer">
@@ -67,7 +67,7 @@
                             <option value="2">🔷 Nhóm 2</option>
                             <option value="3">🔷 Nhóm 3</option>
                             <option value="4">🔷 Nhóm 4</option>
-                            <option value="0">👁️ Nhóm 0: Mới / Chỉ xem (Không được sửa)</option>
+                            <option value="0">👁️ Nhóm 0: Mới / Chỉ xem</option>
                         </select>
                     </div>
                 </div>
@@ -107,7 +107,6 @@
             const userKey = user.email.replace(/\./g, '_');
             db.ref('app_users/' + userKey).once('value').then(snap => {
                 const uData = snap.val();
-                // [FIX] Chỉ Group 5 hoặc Email Admin mới được vào
                 if (user.email === ADMIN_EMAIL || (uData && uData.group == 5)) { initData(); } 
                 else { alert("Bạn không phải Lãnh đạo (Nhóm 5)!"); window.location.href = "index.html"; }
             });
@@ -120,13 +119,29 @@
             const keyword = document.getElementById('searchInput').value.toLowerCase();
             container.innerHTML = '';
             
-            const list = Object.entries(allUsers).filter(([key, u]) => (u.real_name + u.email).toLowerCase().includes(keyword));
+            let list = Object.entries(allUsers).filter(([key, u]) => (u.real_name + u.email).toLowerCase().includes(keyword));
             document.getElementById('totalUsers').innerText = list.length;
 
             if(list.length === 0) { container.innerHTML = '<div class="text-center mt-4 text-muted">Trống</div>'; return; }
 
+            // [NEW] SORTING: 5 -> 1,2,3,4 -> 0
+            const groupOrder = [5, 1, 2, 3, 4, 0];
+            list.sort((a, b) => {
+                const gA = a[1].group !== undefined ? parseInt(a[1].group) : 0;
+                const gB = b[1].group !== undefined ? parseInt(b[1].group) : 0;
+                
+                // Lấy index trong mảng ưu tiên
+                const idxA = groupOrder.indexOf(gA);
+                const idxB = groupOrder.indexOf(gB);
+                
+                // Nếu tìm không thấy (trường hợp lỗi), đẩy xuống cuối
+                const cleanIdxA = idxA === -1 ? 99 : idxA;
+                const cleanIdxB = idxB === -1 ? 99 : idxB;
+
+                return cleanIdxA - cleanIdxB;
+            });
+
             list.forEach(([key, u]) => {
-                // Default group = 0 (Chỉ xem)
                 const grp = u.group !== undefined ? u.group : 0; 
                 
                 let grpBadge = `<span class="badge badge-group-common ms-1">Nhóm ${grp}</span>`;
