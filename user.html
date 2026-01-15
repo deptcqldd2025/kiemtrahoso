@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Nhân Sự v4.2</title>
+    <title>Quản Lý Nhân Sự v4.4</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -11,15 +11,12 @@
         body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
         .admin-header { background: #dc3545; color: white; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .user-card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 10px; border-left: 5px solid #198754; transition: 0.2s; }
-        .user-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .user-card:hover { transform: translateY(-2px); }
         .user-card.blocked { border-left-color: #dc3545; background-color: #fff5f5; opacity: 0.8; }
         .avatar { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
-        .role-badge { font-size: 11px; padding: 3px 8px; border-radius: 10px; text-transform: uppercase; font-weight: bold; }
-        .role-manager { background: #dc3545; color: white; } /* Lãnh đạo - Đỏ */
-        .role-leader { background: #fd7e14; color: white; }  /* Tổ trưởng - Cam */
-        .role-deputy { background: #ffc107; color: black; }   /* Tổ phó - Vàng */
-        .role-worker { background: #e9ecef; color: #495057; } /* Công nhân - Xám */
+        .badge-group-0 { background: #dc3545; color: white; } /* Đỏ - Lãnh đạo */
+        .badge-group-common { background: #0d6efd; color: white; } /* Xanh - Tổ */
     </style>
 </head>
 <body>
@@ -34,27 +31,23 @@
             <div class="col-12">
                 <div class="input-group">
                     <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
-                    <input type="text" id="searchInput" class="form-control" placeholder="Tìm tên, email hoặc sđt..." oninput="renderList()">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Tìm tên, email..." oninput="renderList()">
                 </div>
             </div>
             <div class="col-12 text-muted small d-flex justify-content-between">
-                <span>Tổng số: <b id="totalUsers">0</b> nhân viên</span>
-                <span>Version 4.2</span>
+                <span>Tổng số: <b id="totalUsers">0</b></span>
+                <span>Version 4.4</span>
             </div>
         </div>
-
         <div id="userListContainer">
-            <div class="text-center mt-5"><div class="spinner-border text-danger"></div><p class="mt-2 text-muted">Đang tải danh sách...</p></div>
+            <div class="text-center mt-5"><div class="spinner-border text-danger"></div><p class="mt-2 text-muted">Đang tải...</p></div>
         </div>
     </div>
 
     <div class="modal fade" id="editUserModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">Cập nhật thông tin</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
+                <div class="modal-header bg-primary text-white"><h5 class="modal-title">Cập nhật nhân viên</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <input type="hidden" id="editKey">
                     <div class="mb-3 text-center">
@@ -62,27 +55,19 @@
                         <div id="editEmail" class="text-muted small fw-bold"></div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Họ và Tên hiển thị:</label>
-                        <input type="text" id="editName" class="form-control" placeholder="Ví dụ: Nguyễn Văn A">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Số điện thoại:</label>
-                        <input type="text" id="editPhone" class="form-control" placeholder="09xxxx...">
-                    </div>
+                    <div class="mb-3"><label class="form-label fw-bold">Họ và Tên:</label><input type="text" id="editName" class="form-control"></div>
+                    <div class="mb-3"><label class="form-label fw-bold">Số điện thoại:</label><input type="text" id="editPhone" class="form-control"></div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Chức vụ / Vai trò:</label>
-                        <select id="editRole" class="form-select bg-light border-primary">
-                            <option value="worker">👷 Công nhân (Chỉ xem & sửa tuyến được giao)</option>
-                            <option value="deputy">⭐ Tổ phó (Được sửa tất cả tuyến)</option>
-                            <option value="leader">🌟 Tổ trưởng (Sửa tất cả + Phân công)</option>
-                            <option value="manager">👑 Lãnh đạo Đội (Quản trị viên)</option>
+                        <label class="form-label fw-bold">Thuộc Nhóm / Tổ:</label>
+                        <select id="editGroup" class="form-select border-primary bg-light">
+                            <option value="0">⭐ Nhóm 0: Lãnh đạo / CBKT (Full Quyền)</option>
+                            <option value="1">🔷 Nhóm 1</option>
+                            <option value="2">🔷 Nhóm 2</option>
+                            <option value="3">🔷 Nhóm 3</option>
+                            <option value="4">🔷 Nhóm 4</option>
                         </select>
-                        <div class="form-text small text-muted fst-italic mt-1">
-                            * Lãnh đạo Đội có quyền truy cập trang này và xóa dữ liệu.
-                        </div>
+                        <div class="form-text small text-muted fst-italic mt-1">* Nhóm 0 xem và sửa được tất cả. Các nhóm khác hỗ trợ lẫn nhau trong nhóm.</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -99,7 +84,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // [CONFIG MỚI]
         const firebaseConfig = {
             apiKey: "AIzaSyALxXDNbFdXkI7XvHqiSNb1jnKjj0CbYnE",
             authDomain: "qldd-2025.firebaseapp.com",
@@ -107,166 +91,95 @@
             projectId: "qldd-2025",
             storageBucket: "qldd-2025.firebasestorage.app",
             messagingSenderId: "84684010166",
-            appId: "1:84684010166:web:bd9c3b5ae4227ee2812c17",
-            measurementId: "G-7E5BDTCSEZ"
+            appId: "1:84684010166:web:bd9c3b5ae4227ee2812c17"
         };
         
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
-        
-        // [ADMIN MỚI]
         const ADMIN_EMAIL = 'deptc.qldd2025@gmail.com';
-
         let allUsers = {};
 
-        // 2. AUTH CHECK (BẢO MẬT)
         auth.onAuthStateChanged(user => {
-            if (!user) {
-                alert("Vui lòng đăng nhập!");
-                window.location.href = "index.html";
-            } else {
-                // Kiểm tra quyền Admin trong DB
-                const userKey = user.email.replace(/\./g, '_');
-                db.ref('app_users/' + userKey).once('value').then(snap => {
-                    const uData = snap.val();
-                    // Cho phép nếu là Email Admin cứng HOẶC có role là 'manager'
-                    if (user.email === ADMIN_EMAIL || (uData && uData.role === 'manager')) {
-                        initData();
-                    } else {
-                        alert("Bạn không có quyền truy cập trang quản trị!");
-                        window.location.href = "index.html";
-                    }
-                });
-            }
+            if (!user) { window.location.href = "index.html"; return; }
+            const userKey = user.email.replace(/\./g, '_');
+            db.ref('app_users/' + userKey).once('value').then(snap => {
+                const uData = snap.val();
+                if (user.email === ADMIN_EMAIL || (uData && uData.group == 0)) { initData(); } // Group 0 cũng vào được
+                else { alert("Bạn không phải Lãnh đạo/CBKT (Nhóm 0)!"); window.location.href = "index.html"; }
+            });
         });
 
-        // 3. LOAD DATA
-        function initData() {
-            db.ref('app_users').on('value', snap => {
-                allUsers = snap.val() || {};
-                renderList();
-            });
-        }
+        function initData() { db.ref('app_users').on('value', snap => { allUsers = snap.val() || {}; renderList(); }); }
 
-        // 4. RENDER LIST
         function renderList() {
             const container = document.getElementById('userListContainer');
             const keyword = document.getElementById('searchInput').value.toLowerCase();
             container.innerHTML = '';
             
-            const list = Object.entries(allUsers).filter(([key, u]) => {
-                const searchStr = (u.real_name + u.email + (u.phone || '')).toLowerCase();
-                return searchStr.includes(keyword);
-            });
-
+            const list = Object.entries(allUsers).filter(([key, u]) => (u.real_name + u.email).toLowerCase().includes(keyword));
             document.getElementById('totalUsers').innerText = list.length;
 
-            if(list.length === 0) {
-                container.innerHTML = '<div class="text-center text-muted mt-4">Không tìm thấy nhân viên nào</div>';
-                return;
-            }
+            if(list.length === 0) { container.innerHTML = '<div class="text-center mt-4 text-muted">Trống</div>'; return; }
 
             list.forEach(([key, u]) => {
-                const isBlocked = u.is_blocked === true;
-                const role = u.role || 'worker';
-                
-                // Hiển thị tên Role đẹp
-                let roleLabel = 'Công nhân';
-                let roleClass = 'role-worker';
-                
-                if (role === 'deputy') { roleLabel = 'Tổ phó'; roleClass = 'role-deputy'; }
-                if (role === 'leader') { roleLabel = 'Tổ trưởng'; roleClass = 'role-leader'; }
-                if (role === 'manager') { roleLabel = 'Lãnh đạo'; roleClass = 'role-manager'; }
-
-                const statusHtml = isBlocked 
-                    ? `<span class="badge bg-danger ms-2"><i class="fas fa-lock"></i> Đã khóa</span>` 
-                    : ``;
-                
-                const btnBlock = isBlocked 
-                    ? `<button class="btn btn-sm btn-outline-success ms-1" onclick="toggleBlock('${key}', false)" title="Mở khóa"><i class="fas fa-unlock"></i></button>`
-                    : `<button class="btn btn-sm btn-outline-danger ms-1" onclick="toggleBlock('${key}', true)" title="Khóa tài khoản"><i class="fas fa-lock"></i></button>`;
-
-                const phoneDisplay = u.phone ? `<i class="fas fa-phone-alt text-muted small me-1"></i> ${u.phone}` : `<span class="text-muted small fst-italic">--</span>`;
+                const grp = u.group !== undefined ? u.group : 4; // Mặc định nhóm 4
+                const grpBadge = grp == 0 ? 
+                    `<span class="badge badge-group-0 ms-1">Lãnh đạo (0)</span>` : 
+                    `<span class="badge badge-group-common ms-1">Nhóm ${grp}</span>`;
 
                 container.innerHTML += `
-                <div class="user-card p-3 ${isBlocked ? 'blocked' : ''}">
+                <div class="user-card p-3 ${u.is_blocked?'blocked':''}">
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="d-flex align-items-center" style="flex-grow: 1;">
                             <img src="${u.photo || 'https://via.placeholder.com/50'}" class="avatar me-3">
                             <div>
-                                <h6 class="m-0 fw-bold text-dark">
-                                    ${u.real_name || 'Chưa đặt tên'} 
-                                    <span class="badge ${roleClass} ms-1">${roleLabel}</span>
-                                    ${statusHtml}
-                                </h6>
+                                <h6 class="m-0 fw-bold text-dark">${u.real_name||'No Name'} ${grpBadge}</h6>
                                 <div class="small text-muted">${u.email}</div>
-                                <div class="mt-1 text-secondary small">${phoneDisplay}</div>
                             </div>
                         </div>
-                        <div class="d-flex align-items-center">
-                            <button class="btn btn-sm btn-outline-primary" onclick="openEditModal('${key}')" title="Sửa thông tin"><i class="fas fa-edit"></i></button>
-                            ${btnBlock}
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="openEditModal('${key}')"><i class="fas fa-edit"></i></button>
+                            ${u.is_blocked 
+                                ? `<button class="btn btn-sm btn-outline-success ms-1" onclick="toggleBlock('${key}',false)"><i class="fas fa-unlock"></i></button>` 
+                                : `<button class="btn btn-sm btn-outline-danger ms-1" onclick="toggleBlock('${key}',true)"><i class="fas fa-lock"></i></button>`}
                         </div>
-                    </div>
-                    <div class="text-end mt-2 border-top pt-1 text-muted" style="font-size: 11px;">
-                        <i class="fas fa-clock"></i> Đăng nhập cuối: ${formatTime(u.last_login)}
                     </div>
                 </div>`;
             });
-        }
-
-        // 5. ACTIONS
-        function toggleBlock(key, status) {
-            const user = allUsers[key];
-            if (user.email === ADMIN_EMAIL) return alert("Không thể khóa tài khoản Admin chính!");
-            
-            if(confirm(status ? `Bạn muốn KHÓA tài khoản ${user.real_name || user.email}?` : `Bạn muốn MỞ KHÓA cho ${user.real_name || user.email}?`)) {
-                db.ref('app_users/' + key).update({ is_blocked: status });
-            }
         }
 
         function openEditModal(key) {
             const u = allUsers[key];
             document.getElementById('editKey').value = key;
             document.getElementById('editEmail').innerText = u.email;
-            document.getElementById('editAvatar').src = u.photo || 'https://via.placeholder.com/50';
+            document.getElementById('editAvatar').src = u.photo || '';
             document.getElementById('editName').value = u.real_name || '';
             document.getElementById('editPhone').value = u.phone || '';
-            document.getElementById('editRole').value = u.role || 'worker';
-            
+            document.getElementById('editGroup').value = u.group !== undefined ? u.group : 4;
             new bootstrap.Modal(document.getElementById('editUserModal')).show();
         }
 
         function saveUser() {
             const key = document.getElementById('editKey').value;
             const name = document.getElementById('editName').value.trim();
-            const phone = document.getElementById('editPhone').value.trim();
-            const role = document.getElementById('editRole').value;
+            if(!name) return alert("Nhập tên!");
             
-            if(!name) return alert("Tên không được để trống!");
-
-            // Prevent changing main admin role to something else if editing self (optional safety)
-            if (allUsers[key].email === ADMIN_EMAIL && role !== 'manager') {
-                alert("Tài khoản Admin chính phải luôn là Lãnh đạo!");
-                return;
+            // Bảo vệ Admin chính
+            if (allUsers[key].email === ADMIN_EMAIL && document.getElementById('editGroup').value != 0) {
+                return alert("Admin chính phải luôn ở Nhóm 0!");
             }
 
             db.ref('app_users/' + key).update({
                 real_name: name,
-                phone: phone,
-                role: role
+                phone: document.getElementById('editPhone').value,
+                group: parseInt(document.getElementById('editGroup').value) // Lưu số
             }).then(() => {
-                alert("Đã cập nhật thành công!");
                 bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
-            }).catch(e => alert("Lỗi: " + e.message));
+                alert("Đã cập nhật!");
+            });
         }
-
-        function formatTime(iso) {
-            if(!iso) return 'Chưa đăng nhập';
-            const d = new Date(iso);
-            return `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')} ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
-        }
+        function toggleBlock(k, s) { if(allUsers[k].email === ADMIN_EMAIL) return; db.ref('app_users/'+k).update({is_blocked: s}); }
     </script>
 </body>
 </html>
