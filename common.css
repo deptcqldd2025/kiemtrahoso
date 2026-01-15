@@ -1,23 +1,46 @@
-/* common.css */
-:root { --primary-color: #0d6efd; --bg-light: #f8f9fa; }
-body { background-color: var(--bg-light); font-family: 'Segoe UI', sans-serif; overscroll-behavior-y: none; padding-bottom: 60px; }
+/* common.css - Giao diện đồng bộ */
+:root { --primary-color: #0d6efd; --bg-light: #f8f9fa; --text-dark: #212529; }
+body { background-color: var(--bg-light); font-family: 'Segoe UI', sans-serif; padding-bottom: 80px; /* Chừa chỗ cho footer */ }
 
-/* HEADER */
-.app-header { background: var(--primary-color); color: white; padding: 15px; border-radius: 0 0 20px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; padding-top: max(15px, env(safe-area-inset-top)); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+/* 1. HEADER */
+.app-header { 
+    background: var(--primary-color); color: white; 
+    padding: 15px; border-radius: 0 0 20px 20px; margin-bottom: 20px; 
+    display: flex; align-items: center; justify-content: space-between; 
+    padding-top: max(15px, env(safe-area-inset-top)); 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+    position: sticky; top: 0; z-index: 1000;
+}
 .menu-btn { font-size: 24px; cursor: pointer; color: white; background: none; border: none; }
 
-/* LOGIN */
-#loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-
-/* LOADING */
-#loadingOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(33, 37, 41, 0.98); z-index: 100000; text-align: center; padding-top: 40vh; color: white; }
+/* 2. LOADING SCREEN */
+#loadingOverlay { 
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: rgba(33, 37, 41, 0.98); z-index: 100000; 
+    text-align: center; padding-top: 40vh; color: white; 
+}
 .spinner-border { width: 3rem; height: 3rem; }
 
-/* CARD & LIST */
-.record-card { border: none; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; overflow: hidden; }
-.record-header { background: #e9ecef; padding: 10px 15px; font-weight: bold; color: #495057; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-.card-content { display: none; }
-.card-content.show { display: block; }
+/* 3. LOGIN SCREEN */
+#loginScreen { 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: white; z-index: 99999; 
+    display: flex; flex-direction: column; align-items: center; justify-content: center; 
+}
 
-/* UTILS */
-.fab-switch { position: fixed; bottom: 20px; right: 20px; z-index: 1000; background: #343a40; color: white; border-radius: 50px; padding: 10px 20px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+/* 4. COMPONENTS (Card, List, Button) */
+.record-card { border: none; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; background: white; overflow: hidden; }
+.record-header { background: #e9ecef; padding: 10px 15px; font-weight: bold; color: #495057; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+.status-no-record { background: #fff3cd; color: #856404; padding: 5px 10px; font-size: 13px; border-bottom: 1px solid #ffeeba; }
+
+/* 5. FOOTER (Mới) */
+.app-footer {
+    position: fixed; bottom: 0; left: 0; width: 100%;
+    background: white; border-top: 1px solid #dee2e6;
+    padding: 10px 0; padding-bottom: max(10px, env(safe-area-inset-bottom));
+    display: flex; justify-content: space-around;
+    z-index: 900;
+}
+.nav-item-link { text-align: center; color: #6c757d; text-decoration: none; font-size: 12px; flex: 1; }
+.nav-item-link i { font-size: 20px; display: block; margin-bottom: 2px; }
+.nav-item-link.active { color: var(--primary-color); font-weight: bold; }
