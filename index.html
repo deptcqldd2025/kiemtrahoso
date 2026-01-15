@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Đội QLDD - Kiểm tra hồ sơ v4.0</title>
+    <title>Đội QLDD - Kiểm tra hồ sơ v4.2</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d6efd">
@@ -17,21 +17,15 @@
     <style>
         :root { --primary-color: #0d6efd; --bg-light: #f8f9fa; }
         body { background-color: var(--bg-light); font-family: 'Segoe UI', sans-serif; overscroll-behavior-y: none; }
-        
         .app-header { background: var(--primary-color); color: white; padding: 15px; border-radius: 0 0 20px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; padding-top: max(15px, env(safe-area-inset-top)); }
         .menu-btn { font-size: 24px; cursor: pointer; color: white; background: none; border: none; }
         .fab-switch { position: fixed; bottom: 20px; right: 20px; z-index: 1000; background: #343a40; color: white; border-radius: 50px; padding: 10px 20px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        
         #loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        
         .record-card { border: none; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; overflow: hidden; }
         .record-header { background: #e9ecef; padding: 10px 15px; font-weight: bold; color: #495057; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        
         .file-item { border-bottom: 1px solid #eee; padding: 8px 10px; font-size: 14px; background: white; }
         .file-meta { font-size: 11px; color: #6c757d; display: block; margin-top: 2px; }
         .file-note { font-weight: 500; color: #0d6efd; cursor: pointer; }
-        .file-note:hover { text-decoration: underline; }
-        
         .status-no-record { background: #fff3cd; color: #856404; padding: 5px 10px; font-size: 13px; border-bottom: 1px solid #ffeeba; }
         .readonly-mode .action-bar, .readonly-mode .btn-delete-file { display: none !important; }
         .card-content { display: none; }
@@ -39,19 +33,16 @@
         .upload-btn-wrapper { position: relative; overflow: hidden; display: inline-block; cursor: pointer; }
         .upload-btn-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
         
-        /* Camera UI */
         #cameraOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 99999; display: none; flex-direction: column; }
         #cameraVideo { width: 100%; flex-grow: 1; object-fit: cover; }
         .cam-header { position: absolute; top: 0; width: 100%; padding: 15px; display: flex; justify-content: space-between; z-index: 10; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); padding-top: max(15px, env(safe-area-inset-top)); }
         .cam-footer { background: #000; padding: 20px 10px; display: flex; align-items: center; justify-content: space-around; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
         .btn-shutter { width: 70px; height: 70px; border-radius: 50%; background: white; border: 4px solid #ccc; display: block; }
-        .btn-shutter:active { background: #ddd; transform: scale(0.95); }
         .cam-preview-bar { position: absolute; bottom: 120px; left: 0; width: 100%; overflow-x: auto; white-space: nowrap; padding: 5px; background: rgba(0,0,0,0.5); min-height: 80px; display: none; }
         .cam-thumb-box { display: inline-block; position: relative; width: 60px; height: 80px; margin-right: 5px; border: 2px solid white; }
         .cam-thumb-img { width: 100%; height: 100%; object-fit: cover; }
         .btn-del-thumb { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; border: none; display: flex; align-items: center; justify-content: center; }
         
-        /* Loading Screen */
         #loadingOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(33, 37, 41, 0.98); z-index: 100000; text-align: center; padding-top: 40vh; color: white; }
         .spinner-border { width: 3rem; height: 3rem; }
     </style>
@@ -64,18 +55,16 @@
         <button class="btn btn-outline-dark btn-lg px-4" onclick="handleLogin()">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" class="me-2"> Đăng nhập Gmail
         </button>
-        <small class="mt-4 text-muted">Phiên bản 4.0 (QLDD-2025)</small>
+        <small class="mt-4 text-muted">Phiên bản 4.2 (Admin Fixed)</small>
         <div class="mt-3"><button class="btn btn-sm btn-link text-secondary" onclick="forceClear()">Xóa Cache hệ thống</button></div>
     </div>
 
     <div id="loadingOverlay">
         <div class="spinner-border text-primary" role="status"></div>
         <p class="mt-3 fw-bold" id="loadingText">Đang tải...</p>
-        <div id="loadingSub" class="small text-muted"></div>
     </div>
 
     <div id="mainApp" class="d-none">
-        
         <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu">
             <div class="offcanvas-header bg-primary text-white"><h5 class="offcanvas-title">Menu</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button></div>
             <div class="offcanvas-body">
@@ -88,7 +77,7 @@
                 <div class="list-group list-group-flush">
                     <a href="huong_dan.html" target="_blank" class="list-group-item list-group-item-action"><i class="fas fa-book me-2 text-primary"></i> Hướng dẫn sử dụng</a>
                     <a href="chart.html" class="list-group-item list-group-item-action"><i class="fas fa-chart-line me-2 text-warning"></i> Thống kê & Báo cáo</a>
-                    <button class="list-group-item list-group-item-action" onclick="alert('V4.0: Chuyển đổi Server QLDD-2025')">Thông tin Phiên bản 4.0</button>
+                    <button class="list-group-item list-group-item-action" onclick="alert('V4.2: Admin deptc.qldd2025@gmail.com')">Thông tin Phiên bản 4.2</button>
                     <a id="btnUserManager" href="user.html" class="list-group-item list-group-item-action d-none text-primary fw-bold mt-2"><i class="fas fa-users-cog"></i> Quản lý Nhân sự (Admin)</a>
                 </div>
             </div>
@@ -96,7 +85,7 @@
 
         <div class="app-header">
             <button class="menu-btn" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i class="fas fa-bars"></i></button>
-            <h6 class="m-0 fw-bold">Kiểm tra hồ sơ v4.0 <span id="headerLockStatus" class="badge bg-danger ms-2" style="display:none"><i class="fas fa-lock"></i></span></h6>
+            <h6 class="m-0 fw-bold">Kiểm tra hồ sơ v4.2 <span id="headerLockStatus" class="badge bg-danger ms-2" style="display:none"><i class="fas fa-lock"></i></span></h6>
             <div style="width: 24px;"></div>
         </div>
         <button class="fab-switch" onclick="toggleView()"><i class="fas fa-sync"></i> View</button>
@@ -148,7 +137,7 @@
     <script>
         if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); }); }
 
-        // [CONFIG MỚI] Đã cập nhật databaseURL chính xác
+        // [CONFIG MỚI - QLDD-2025]
         const firebaseConfig = {
             apiKey: "AIzaSyALxXDNbFdXkI7XvHqiSNb1jnKjj0CbYnE",
             authDomain: "qldd-2025.firebaseapp.com",
@@ -163,11 +152,9 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
-
-        // Script cũ để lưu file
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzkobBHYC86WLwPgU3nXVxXLXkxxUt3fvmsPMof8-Tww_jN3FdsELmnS2p-f0ipnqif/exec'; 
         
-        // Admin mới
+        // [QUAN TRỌNG] Admin Mới
         const ADMIN_EMAIL = 'deptc.qldd2025@gmail.com';
 
         const DOC_CATEGORIES = {
@@ -185,13 +172,7 @@
                 showLoading(true, "Đang kết nối Server mới...");
                 document.getElementById('loginScreen').classList.add('d-none');
                 
-                // Safety Timeout
-                setTimeout(() => {
-                    if (!isDataLoaded) {
-                        showLoading(false);
-                        document.getElementById('mainApp').classList.remove('d-none');
-                    }
-                }, 5000);
+                setTimeout(() => { if (!isDataLoaded) { showLoading(false); document.getElementById('mainApp').classList.remove('d-none'); } }, 5000);
 
                 registerUser(user);
                 initDataListeners();
@@ -223,7 +204,8 @@
 
         function handleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
         function handleLogout() { auth.signOut().then(() => location.reload()); }
-        
+        function checkAdminUI() { if(currentUser?.email === ADMIN_EMAIL) { document.getElementById('btnUserManager').classList.remove('d-none'); document.getElementById('adminControls').classList.remove('d-none'); document.getElementById('adminControls').classList.add('d-flex'); } }
+
         function initDataListeners() {
             db.ref('app_users').on('value', snap => {
                 allUsersData = snap.val() || {};
@@ -233,14 +215,20 @@
                     document.getElementById('menuUserName').innerText = allUsersData[myKey].real_name || currentUser.displayName;
                     document.getElementById('menuUserEmail').innerText = currentUser.email;
                     document.getElementById('menuUserAvatar').src = currentUser.photoURL;
-                    document.getElementById('menuUserRole').innerText = getRoleName(currentUserStatus.role);
                     
-                    const isBoss = ['manager', 'leader', 'deputy'].includes(currentUserStatus.role);
-                    if (isBoss) {
+                    // [V4.2] LOGIC QUYỀN: Role DB HOẶC Email cứng (deptc.qldd2025@gmail.com)
+                    const isManager = currentUserStatus.role === 'manager' || currentUser.email === ADMIN_EMAIL;
+                    const isLeader = currentUserStatus.role === 'leader' || isManager;
+                    const isDeputy = currentUserStatus.role === 'deputy' || isLeader;
+
+                    document.getElementById('menuUserRole').innerText = isManager ? 'Lãnh đạo Đội (Admin)' : getRoleName(currentUserStatus.role);
+                    
+                    if (isDeputy) {
                         document.getElementById('btnAddLine').classList.remove('d-none');
                         document.getElementById('btnAssign').classList.remove('d-none');
                     }
-                    if (currentUserStatus.role === 'manager') {
+                    
+                    if (isManager) {
                         document.getElementById('btnUserManager').classList.remove('d-none');
                         document.getElementById('adminControls').classList.remove('d-none');
                         document.getElementById('adminControls').classList.add('d-flex');
@@ -253,11 +241,8 @@
                 allLinesData = snap.val() || {};
                 filterLines(); 
                 renderDashboard();
-                if (currentLineId && allLinesData[currentLineId]) {
-                    renderMobileList(allLinesData[currentLineId]);
-                } else if (!currentLineId) {
-                    document.getElementById('mobileRecordList').innerHTML = '<div class="text-center mt-5 text-muted small fst-italic">Vui lòng chọn tuyến dây để xem</div>';
-                }
+                if (currentLineId && allLinesData[currentLineId]) renderMobileList(allLinesData[currentLineId]);
+                else if (!currentLineId) document.getElementById('mobileRecordList').innerHTML = '<div class="text-center mt-5 text-muted small fst-italic">Vui lòng chọn tuyến dây để xem</div>';
                 showLoading(false);
                 document.getElementById('mainApp').classList.remove('d-none');
             }, (error) => {
@@ -267,7 +252,6 @@
             });
         }
 
-        function checkAdminUI() { if(currentUser?.email === ADMIN_EMAIL) { document.getElementById('btnUserManager').classList.remove('d-none'); document.getElementById('adminControls').classList.remove('d-none'); document.getElementById('adminControls').classList.add('d-flex'); } }
         function getRoleName(r) { if(r==='manager') return 'Lãnh đạo Đội'; if(r==='leader') return 'Tổ trưởng'; if(r==='deputy') return 'Tổ phó'; return 'Công nhân'; }
 
         // CAMERA & UPLOAD
@@ -278,9 +262,9 @@
         function renderCamThumbs() { const bar = document.getElementById('camPreviewBar'); bar.style.display = capturedPages.length ? 'block' : 'none'; bar.innerHTML = ''; capturedPages.forEach((img, idx) => { bar.innerHTML += `<div class="cam-thumb-box"><img src="${img}" class="cam-thumb-img"><button class="btn-del-thumb" onclick="removePage(${idx})">x</button></div>`; }); }
         function removePage(idx) { capturedPages.splice(idx, 1); renderCamThumbs(); document.getElementById('camCount').innerText = capturedPages.length; }
         function closeCamera() { if(videoStream) videoStream.getTracks().forEach(t => t.stop()); document.getElementById('cameraOverlay').style.display = 'none'; }
-        function prepareScan(docId) { if(!canEditLine()) return; const note = document.getElementById(`note_${docId}`).value; if (!note.trim()) return alert("Nhập ghi chú trước khi Scan!"); scanContext = { lineId: currentLineId, docId, note: note.trim() }; capturedPages = []; document.getElementById('camCount').innerText = "0"; renderCamThumbs(); startCamera(); }
+        function prepareScan(docId) { if(!canEditLine()) return; const note = document.getElementById(`note_${docId}`).value; if (!note.trim()) return alert("Nhập tên tài liệu!"); scanContext = { lineId: currentLineId, docId, note: note.trim() }; capturedPages = []; document.getElementById('camCount').innerText = "0"; renderCamThumbs(); startCamera(); }
         function finishScanAndUpload() { if(capturedPages.length === 0) return alert("Chưa chụp ảnh nào!"); if (!window.jspdf) { alert("Đang tải thư viện PDF..."); return; } closeCamera(); showLoading(true, "Đang tạo PDF..."); setTimeout(() => { try { const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4'); const pw = doc.internal.pageSize.getWidth(); capturedPages.forEach((img, i) => { if(i > 0) doc.addPage(); const p = doc.getImageProperties(img); doc.addImage(img, 'JPEG', 10, 10, pw - 20, (p.height * (pw - 20)) / p.width); }); const base64 = doc.output('datauristring').split(',')[1]; sendToScript(base64, 'application/pdf', `SCAN_${Date.now()}.pdf`, scanContext.note, scanContext.docId); } catch(e) { alert("Lỗi PDF: " + e); showLoading(false); } }, 500); }
-        function canEditLine() { if (currentUserStatus.is_blocked) return false; const role = currentUserStatus.role || 'worker'; if (['manager', 'leader', 'deputy'].includes(role)) { if (allLinesData[currentLineId]?.is_locked && role !== 'manager') return false; return true; } const line = allLinesData[currentLineId]; if (line.is_locked) return false; const safeEmail = currentUser.email.replace(/\./g, '_'); if (line.assigned_to && line.assigned_to[safeEmail]) return true; return false; }
+        function canEditLine() { if (currentUserStatus.is_blocked) return false; const role = currentUserStatus.role || 'worker'; if (['manager', 'leader', 'deputy'].includes(role) || currentUser.email === ADMIN_EMAIL) { if (allLinesData[currentLineId]?.is_locked && role !== 'manager' && currentUser.email !== ADMIN_EMAIL) return false; return true; } const line = allLinesData[currentLineId]; if (line.is_locked) return false; const safeEmail = currentUser.email.replace(/\./g, '_'); if (line.assigned_to && line.assigned_to[safeEmail]) return true; return false; }
         function sendToScript(b64, type, name, note, id) { showLoading(true, "Đang gửi dữ liệu..."); fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ base64: b64, mimeType: type, filename: name }) }).then(r => r.json()).then(d => { if (d.status === 'success') { db.ref(`lines/${currentLineId}/records/${id}/files`).push({ link: d.url, note: note, created_at: new Date().toISOString(), user: currentUser.email }); alert("Thành công!"); document.getElementById(`note_${id}`).value = ''; } else alert("Lỗi Server: " + d.message); }).catch(e => alert("Lỗi Mạng: " + e)).finally(() => showLoading(false)); }
         function handleUpload(input, docId) { if(!canEditLine()) { input.value=''; return; } const file=input.files[0], note=document.getElementById(`note_${docId}`).value; if(!file || !note.trim()) { input.value=''; return alert("Nhập tên tài liệu!"); } showLoading(true, "Đang xử lý..."); const r=new FileReader(); r.readAsDataURL(file); r.onload=e=>sendToScript(e.target.result.split(',')[1], file.type, `${currentLineId}_${docId}_${file.name}`, note, docId); }
         function viewDocument(link) { let previewLink = link; if (link.includes('drive.google.com')) { if(link.includes('/view')) previewLink = link.replace(/\/view.*/, '/preview'); else previewLink = link + '/preview'; } document.getElementById('docFrame').src = previewLink; new bootstrap.Modal(document.getElementById('viewDocModal')).show(); }
@@ -313,7 +297,7 @@
                     h += `<div class="card record-card"><div class="record-header" onclick="this.nextElementSibling.classList.toggle('show')"><span><i class="fas ${icon} me-2"></i>${i.name}</span><i class="fas fa-chevron-down small text-muted"></i></div><div class="card-content show bg-white">`;
                     if(isNoRecord) h += `<div class="status-no-record"><i class="fas fa-user-times"></i> Đã kiểm tra (0 HS) - ${getRealName(rec.no_record_user)}</div>`;
                     for (const [fId, fData] of Object.entries(files)) {
-                        const canDel = allowEdit && (currentUserStatus.role === 'manager' || fData.user === currentUser.email);
+                        const canDel = allowEdit && ((currentUserStatus.role === 'manager' || currentUser.email === ADMIN_EMAIL) || fData.user === currentUser.email);
                         const delBtn = canDel ? `<button class="btn btn-sm text-danger ms-2 btn-delete-file" onclick="deleteFile('${currentLineId}','${i.id}','${fId}','${fData.user}')"><i class="fas fa-times"></i></button>` : '';
                         h += `<div class="file-item"><div><div class="file-note" onclick="viewDocument('${fData.link}')">${fData.note||'Tài liệu'}</div><span class="file-meta"><i class="fas fa-user-edit"></i> ${getRealName(fData.user)} <i class="fas fa-clock ms-2"></i> ${formatTime(fData.created_at)}</span></div><div><button class="btn btn-sm btn-outline-primary" onclick="viewDocument('${fData.link}')"><i class="fas fa-eye"></i></button>${delBtn}</div></div>`;
                     }
@@ -328,7 +312,7 @@
         }
 
         function toggleNoRecord(docId) { if(!canEditLine()) return; const rec = (allLinesData[currentLineId].records||{})[docId] || {}; if(rec.no_record) { if(confirm("Hủy trạng thái?")) db.ref(`lines/${currentLineId}/records/${docId}/no_record`).remove(); } else { if(confirm("Xác nhận KHÔNG CÓ HỒ SƠ?")) db.ref(`lines/${currentLineId}/records/${docId}`).update({ no_record: true, no_record_user: currentUser.email }); } }
-        function deleteFile(lId, dId, fId, owner) { if(!canEditLine()) return; if(currentUserStatus.role !== 'manager' && owner !== currentUser.email) return alert("Không thể xóa file của người khác!"); if(confirm("Xóa file này?")) db.ref(`lines/${lId}/records/${dId}/files/${fId}`).remove(); }
+        function deleteFile(lId, dId, fId, owner) { if(!canEditLine()) return; if((currentUserStatus.role !== 'manager' && currentUser.email !== ADMIN_EMAIL) && owner !== currentUser.email) return alert("Không thể xóa file của người khác!"); if(confirm("Xóa file này?")) db.ref(`lines/${lId}/records/${dId}/files/${fId}`).remove(); }
         function toggleLockLine() { if(!currentLineId) return; const s=allLinesData[currentLineId].is_locked; if(confirm(s?"MỞ KHÓA?":"KHÓA TUYẾN?")) db.ref('lines/'+currentLineId).update({is_locked:!s}); }
         function handleDeleteLine() { if(!currentLineId) return; if(confirm("XÓA VĨNH VIỄN?")) db.ref('lines/'+currentLineId).remove().then(()=>currentLineId=''); }
         function openAssignModal() { if(!currentLineId) return alert("Chọn tuyến trước!"); const line=allLinesData[currentLineId]; const assigned=line.assigned_to||{}; const list=document.getElementById('assignUserList'); list.innerHTML=''; Object.entries(allUsersData).forEach(([k, u])=>{ if(u.role==='worker'||!u.role) { const isChecked=assigned[k]?'checked':''; list.innerHTML+=`<label class="list-group-item"><input class="form-check-input me-1" type="checkbox" value="${k}" ${isChecked}> ${u.real_name||u.email}</label>`; } }); new bootstrap.Modal(document.getElementById('assignModal')).show(); }
@@ -341,7 +325,7 @@
                 tL++; let done=0;
                 if(l.records) Object.values(l.records).forEach(rec => { if((rec.files && Object.keys(rec.files).length>0) || rec.link || rec.no_record) done++; });
                 tF += done;
-                const delBtn = (currentUserStatus.role === 'manager') ? `<button class="btn btn-sm btn-danger ms-1" onclick="handleDeleteLine('${id}')"><i class="fas fa-trash"></i></button>` : '';
+                const delBtn = (currentUserStatus.role === 'manager' || currentUser.email === ADMIN_EMAIL) ? `<button class="btn btn-sm btn-danger ms-1" onclick="handleDeleteLine('${id}')"><i class="fas fa-trash"></i></button>` : '';
                 const lockIcon = (l.is_locked === true) ? '<i class="fas fa-lock text-danger ms-2" title="Đã khóa"></i>' : '';
                 const pct = Math.round((done / PER_LINE) * 100);
                 const printBtn = `<button class="btn btn-sm btn-secondary ms-1" onclick="window.open('print.html?id=${id}', '_blank')"><i class="fas fa-print"></i></button>`;
