@@ -3,69 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Nhân Sự - Đội QLDD</title>
+    <title>Quản Lý Nhân Sự v3.4</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <style>
         body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
         .admin-header { background: #dc3545; color: white; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .user-card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 10px; border-left: 5px solid #198754; transition: 0.2s; }
+        .user-card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 10px; border-left: 5px solid #198754; position: relative; }
         .user-card.blocked { border-left-color: #dc3545; background-color: #fff5f5; opacity: 0.8; }
-        .avatar { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .btn-icon { width: 35px; height: 35px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; }
+        .avatar { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
+        .group-badge { position: absolute; top: 10px; right: 10px; background: #e9ecef; color: #333; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: bold; border: 1px solid #ccc; }
     </style>
 </head>
 <body>
-
     <div class="admin-header d-flex align-items-center justify-content-between">
         <h5 class="m-0"><i class="fas fa-users-cog"></i> Quản Lý Nhân Sự</h5>
         <a href="index.html" class="btn btn-sm btn-light text-danger fw-bold"><i class="fas fa-home"></i> Trang chủ</a>
     </div>
 
     <div class="container pb-5">
-        <div class="row g-2 mb-3">
-            <div class="col-12">
-                <div class="input-group">
-                    <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
-                    <input type="text" id="searchInput" class="form-control" placeholder="Tìm tên, email hoặc sđt..." oninput="renderList()">
-                </div>
-            </div>
-            <div class="col-12 text-muted small">
-                Tổng số: <b id="totalUsers">0</b> nhân viên
-            </div>
+        <div class="input-group mb-3">
+            <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+            <input type="text" id="searchInput" class="form-control" placeholder="Tìm tên, tổ, sđt..." oninput="renderList()">
         </div>
-
-        <div id="userListContainer">
-            <div class="text-center mt-5"><div class="spinner-border text-danger"></div></div>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <small class="text-muted" id="totalCount">Loading...</small>
+            <button class="btn btn-sm btn-outline-secondary" onclick="initData()"><i class="fas fa-sync"></i> Tải lại</button>
         </div>
+        <div id="userListContainer"></div>
     </div>
 
     <div class="modal fade" id="editUserModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">Cập nhật thông tin</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
+                <div class="modal-header bg-primary text-white"><h5 class="modal-title">Cập nhật nhân viên</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <input type="hidden" id="editKey">
-                    <div class="mb-3 text-center">
-                        <img id="editAvatar" src="" class="avatar mb-2">
-                        <div id="editEmail" class="text-muted small fw-bold"></div>
-                    </div>
                     <div class="mb-3">
-                        <label class="form-label">Họ và Tên:</label>
+                        <label class="form-label">Họ tên hiển thị:</label>
                         <input type="text" id="editName" class="form-control">
                     </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Số điện thoại:</label>
+                            <input type="text" id="editPhone" class="form-control">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold text-primary">Tổ / Nhóm:</label>
+                            <input type="text" id="editGroup" class="form-control" placeholder="VD: Tổ 1" list="groupSuggestions">
+                            <datalist id="groupSuggestions">
+                                <option value="Lãnh đạo Đội">
+                                <option value="Tổ Tổng hợp">
+                                <option value="Tổ 1">
+                                <option value="Tổ 2">
+                                <option value="Tổ 3">
+                                <option value="Tổ Hotline">
+                            </datalist>
+                        </div>
+                    </div>
                     <div class="mb-3">
-                        <label class="form-label">Số điện thoại:</label>
-                        <input type="text" id="editPhone" class="form-control" placeholder="Nhập số điện thoại...">
+                        <label class="form-label fw-bold">Chức vụ / Phân quyền:</label>
+                        <select id="editRole" class="form-select">
+                            <option value="worker">Công nhân (Chỉ sửa tuyến được giao)</option>
+                            <option value="deputy">Tổ phó (Sửa tất cả)</option>
+                            <option value="leader">Tổ trưởng (Sửa tất cả + Phân công)</option>
+                            <option value="manager">Lãnh đạo Đội (Quản trị viên)</option>
+                        </select>
+                        <div class="form-text small text-muted mt-2">
+                            * Tổ trưởng/Phó có quyền sửa mọi tuyến dây để kiểm tra.
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-primary" onclick="saveUser()">Lưu thay đổi</button>
+                    <button class="btn btn-primary w-100" onclick="saveUser()">Lưu thay đổi</button>
                 </div>
             </div>
         </div>
@@ -77,139 +87,89 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // 1. CONFIG
-        const firebaseConfig = { 
-            apiKey: "AIzaSyCzWjfcD5Dgq7V-i2izb9tKLR6QM6qWPQo", 
-            authDomain: "tavietnam-78ae8.firebaseapp.com", 
-            projectId: "tavietnam-78ae8", 
-            storageBucket: "tavietnam-78ae8.firebasestorage.app", 
-            messagingSenderId: "670121705534", 
-            appId: "1:670121705534:web:1027ad98550573ad37116f" 
-        };
+        const firebaseConfig = { apiKey: "AIzaSyCzWjfcD5Dgq7V-i2izb9tKLR6QM6qWPQo", authDomain: "tavietnam-78ae8.firebaseapp.com", projectId: "tavietnam-78ae8", storageBucket: "tavietnam-78ae8.firebasestorage.app", messagingSenderId: "670121705534", appId: "1:670121705534:web:1027ad98550573ad37116f" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
         const ADMIN_EMAIL = 'deptc.gvatvsld@gmail.com';
-
         let allUsers = {};
 
-        // 2. AUTH CHECK (BẢO MẬT)
         auth.onAuthStateChanged(user => {
-            if (!user) {
-                alert("Vui lòng đăng nhập!");
-                window.location.href = "index.html";
-            } else if (user.email !== ADMIN_EMAIL) {
-                alert("Bạn không có quyền truy cập trang này!");
-                window.location.href = "index.html";
-            } else {
-                // Là Admin -> Load dữ liệu
-                initData();
-            }
+            if (!user || user.email !== ADMIN_EMAIL) { alert("Cần quyền Admin!"); window.location.href="index.html"; }
+            else initData();
         });
 
-        // 3. LOAD DATA
         function initData() {
-            db.ref('app_users').on('value', snap => {
-                allUsers = snap.val() || {};
-                renderList();
-            });
+            db.ref('app_users').on('value', snap => { allUsers = snap.val() || {}; renderList(); });
         }
 
-        // 4. RENDER LIST
         function renderList() {
             const container = document.getElementById('userListContainer');
             const keyword = document.getElementById('searchInput').value.toLowerCase();
             container.innerHTML = '';
             
-            const list = Object.entries(allUsers).filter(([key, u]) => {
-                const searchStr = (u.real_name + u.email + (u.phone || '')).toLowerCase();
-                return searchStr.includes(keyword);
-            });
+            const list = Object.entries(allUsers).filter(([k, u]) => 
+                (u.real_name+u.email+(u.group||'')).toLowerCase().includes(keyword)
+            );
+            
+            // Sort by Group then Name
+            list.sort((a,b) => (a[1].group || 'ZZ').localeCompare(b[1].group || 'ZZ'));
 
-            document.getElementById('totalUsers').innerText = list.length;
-
-            if(list.length === 0) {
-                container.innerHTML = '<div class="text-center text-muted mt-4">Không tìm thấy nhân viên</div>';
-                return;
-            }
+            document.getElementById('totalCount').innerText = `Tổng: ${list.length} nhân viên`;
 
             list.forEach(([key, u]) => {
-                const isBlocked = u.is_blocked === true;
-                const statusHtml = isBlocked 
-                    ? `<span class="badge bg-danger">Đã khóa</span>` 
-                    : `<span class="badge bg-success">Hoạt động</span>`;
+                let roleName = 'Công nhân';
+                if(u.role=='deputy') roleName='Tổ phó';
+                if(u.role=='leader') roleName='Tổ trưởng';
+                if(u.role=='manager') roleName='Lãnh đạo';
                 
-                const btnBlock = isBlocked 
-                    ? `<button class="btn btn-icon btn-outline-success" onclick="toggleBlock('${key}', false)" title="Mở khóa"><i class="fas fa-unlock"></i></button>`
-                    : `<button class="btn btn-icon btn-outline-danger" onclick="toggleBlock('${key}', true)" title="Khóa tài khoản"><i class="fas fa-lock"></i></button>`;
-
-                const phoneDisplay = u.phone ? `<i class="fas fa-phone-alt text-muted small me-1"></i> ${u.phone}` : `<span class="text-muted small fst-italic">Chưa có SĐT</span>`;
+                const groupLabel = u.group ? `<span class="group-badge">${u.group}</span>` : '';
 
                 container.innerHTML += `
-                <div class="user-card p-3 ${isBlocked ? 'blocked' : ''}">
-                    <div class="d-flex align-items-center justify-content-between">
+                <div class="user-card p-3 ${u.is_blocked?'blocked':''}">
+                    ${groupLabel}
+                    <div class="d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center">
-                            <img src="${u.photo || 'https://via.placeholder.com/50'}" class="avatar me-3">
+                            <img src="${u.photo||'https://via.placeholder.com/50'}" class="avatar me-3">
                             <div>
-                                <h6 class="m-0 fw-bold text-primary">${u.real_name || 'Chưa đặt tên'}</h6>
-                                <div class="small text-muted">${u.email}</div>
-                                <div class="mt-1">${phoneDisplay}</div>
+                                <h6 class="m-0 fw-bold">${u.real_name||'Chưa đặt tên'}</h6>
+                                <div class="small text-muted">${roleName} - ${u.email}</div>
+                                <div class="small text-muted fst-italic">${u.phone||''}</div>
                             </div>
                         </div>
-                        <div class="d-flex flex-column align-items-end gap-2">
-                            ${statusHtml}
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-icon btn-outline-primary" onclick="openEditModal('${key}')" title="Sửa thông tin"><i class="fas fa-edit"></i></button>
-                                ${btnBlock}
-                            </div>
+                        <div class="mt-3">
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="openEdit('${key}')"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm ${u.is_blocked?'btn-success':'btn-outline-danger'}" onclick="toggleBlock('${key}',${!u.is_blocked})">
+                                <i class="fas ${u.is_blocked?'fa-unlock':'fa-lock'}"></i>
+                            </button>
                         </div>
-                    </div>
-                    <div class="text-end mt-2 border-top pt-1 text-muted" style="font-size: 11px;">
-                        Đăng nhập cuối: ${formatTime(u.last_login)}
                     </div>
                 </div>`;
             });
         }
 
-        // 5. ACTIONS
-        function toggleBlock(key, status) {
-            if(confirm(status ? "Chặn nhân viên này cập nhật dữ liệu?" : "Khôi phục quyền cho nhân viên này?")) {
-                db.ref('app_users/' + key).update({ is_blocked: status });
-            }
-        }
-
-        function openEditModal(key) {
+        function openEdit(key) {
             const u = allUsers[key];
             document.getElementById('editKey').value = key;
-            document.getElementById('editEmail').innerText = u.email;
-            document.getElementById('editAvatar').src = u.photo || 'https://via.placeholder.com/50';
             document.getElementById('editName').value = u.real_name || '';
             document.getElementById('editPhone').value = u.phone || '';
-            
+            document.getElementById('editGroup').value = u.group || '';
+            document.getElementById('editRole').value = u.role || 'worker';
             new bootstrap.Modal(document.getElementById('editUserModal')).show();
         }
 
         function saveUser() {
             const key = document.getElementById('editKey').value;
-            const name = document.getElementById('editName').value.trim();
-            const phone = document.getElementById('editPhone').value.trim();
-            
-            if(!name) return alert("Tên không được để trống!");
-
-            db.ref('app_users/' + key).update({
-                real_name: name,
-                phone: phone
+            db.ref('app_users/'+key).update({
+                real_name: document.getElementById('editName').value,
+                phone: document.getElementById('editPhone').value,
+                group: document.getElementById('editGroup').value,
+                role: document.getElementById('editRole').value
             }).then(() => {
-                alert("Đã cập nhật!");
                 bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
             });
         }
-
-        function formatTime(iso) {
-            if(!iso) return 'Chưa đăng nhập';
-            const d = new Date(iso);
-            return `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')} ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
-        }
+        function toggleBlock(k, s) { db.ref('app_users/'+k).update({is_blocked: s}); }
     </script>
 </body>
 </html>
