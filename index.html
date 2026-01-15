@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Đội QLDD - Kiểm tra hồ sơ v4.7</title>
+    <title>Sổ Tay Đường Dây - V5.0</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d6efd">
@@ -12,145 +12,30 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <style>
-        :root { --primary-color: #0d6efd; --bg-light: #f8f9fa; }
-        body { background-color: var(--bg-light); font-family: 'Segoe UI', sans-serif; overscroll-behavior-y: none; }
-        .app-header { background: var(--primary-color); color: white; padding: 15px; border-radius: 0 0 20px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; padding-top: max(15px, env(safe-area-inset-top)); }
-        .menu-btn { font-size: 24px; cursor: pointer; color: white; background: none; border: none; }
-        .fab-switch { position: fixed; bottom: 20px; right: 20px; z-index: 1000; background: #343a40; color: white; border-radius: 50px; padding: 10px 20px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        #loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .record-card { border: none; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; overflow: hidden; }
-        .record-header { background: #e9ecef; padding: 10px 15px; font-weight: bold; color: #495057; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .file-item { border-bottom: 1px solid #eee; padding: 8px 10px; font-size: 14px; background: white; }
-        .file-meta { font-size: 11px; color: #6c757d; display: block; margin-top: 2px; }
-        .file-note { font-weight: 500; color: #0d6efd; cursor: pointer; }
-        .status-no-record { background: #fff3cd; color: #856404; padding: 5px 10px; font-size: 13px; border-bottom: 1px solid #ffeeba; }
-        .readonly-mode .action-bar, .readonly-mode .btn-delete-file { display: none !important; }
-        .card-content { display: none; }
-        .card-content.show { display: block; }
-        .upload-btn-wrapper { position: relative; overflow: hidden; display: inline-block; cursor: pointer; }
-        .upload-btn-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-        
-        #cameraOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 99999; display: none; flex-direction: column; }
-        #cameraVideo { width: 100%; flex-grow: 1; object-fit: cover; }
-        .cam-header { position: absolute; top: 0; width: 100%; padding: 15px; display: flex; justify-content: space-between; z-index: 10; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); padding-top: max(15px, env(safe-area-inset-top)); }
-        .cam-footer { background: #000; padding: 20px 10px; display: flex; align-items: center; justify-content: space-around; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
-        .btn-shutter { width: 70px; height: 70px; border-radius: 50%; background: white; border: 4px solid #ccc; display: block; }
-        .cam-preview-bar { position: absolute; bottom: 120px; left: 0; width: 100%; overflow-x: auto; white-space: nowrap; padding: 5px; background: rgba(0,0,0,0.5); min-height: 80px; display: none; }
-        .cam-thumb-box { display: inline-block; position: relative; width: 60px; height: 80px; margin-right: 5px; border: 2px solid white; }
-        .cam-thumb-img { width: 100%; height: 100%; object-fit: cover; }
-        .btn-del-thumb { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; border: none; display: flex; align-items: center; justify-content: center; }
-        
-        #loadingOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(33, 37, 41, 0.98); z-index: 100000; text-align: center; padding-top: 35vh; color: white; }
-        .spinner-border { width: 3rem; height: 3rem; }
-    </style>
-</head>
+    <link rel="stylesheet" href="common.css"> </head>
 <body>
 
-    <div id="loginScreen">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="80" class="mb-4">
-        <h4 class="mb-3 text-primary fw-bold">Đội QLDD - Kiểm tra hồ sơ</h4>
-        <button class="btn btn-outline-dark btn-lg px-4" onclick="handleLogin()">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" class="me-2"> Đăng nhập Gmail
-        </button>
-        <small class="mt-4 text-muted">Phiên bản 4.7 (Filter Group)</small>
-        <div class="mt-3"><button class="btn btn-sm btn-link text-secondary" onclick="forceClear()">Xóa Cache hệ thống</button></div>
-    </div>
+    <div id="app-header-placeholder"></div>
 
-    <div id="loadingOverlay">
-        <img src="icon-192.png" width="60" class="mb-3 rounded-circle shadow">
-        <h4 class="fw-bold mb-1">Đội Quản Lý Đường Dây</h4>
-        <p class="small text-muted mb-4">Ứng dụng Kiểm tra Hồ sơ Lưới điện</p>
-        <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-3 fw-bold text-light" id="loadingText">Đang tải...</p>
-        <div id="loadingSub" class="small text-muted">Version 4.7</div>
-    </div>
-
-    <div id="mainApp" class="d-none">
-        <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu">
-            <div class="offcanvas-header bg-primary text-white"><h5 class="offcanvas-title">Menu</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button></div>
-            <div class="offcanvas-body">
-                <div class="text-center mb-4">
-                    <img id="menuUserAvatar" src="" style="width:60px;height:60px;border-radius:50%">
-                    <div class="fw-bold mt-2" id="menuUserName">User</div>
-                    <div class="small text-muted" id="menuUserRole">Loading...</div>
-                    <button class="btn btn-sm btn-outline-danger mt-2" onclick="handleLogout()">Đăng xuất</button>
+    <div id="mainContent" class="container pb-5" style="display:none">
+        <div class="card mx-2 mb-3 shadow-sm">
+            <div class="card-body p-3">
+                <div class="input-group mb-2">
+                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                    <input type="text" id="lineSearchInput" class="form-control border-start-0" placeholder="Tìm tuyến..." oninput="filterLines()">
                 </div>
-                <div class="list-group list-group-flush">
-                    <a href="huong_dan.html" target="_blank" class="list-group-item list-group-item-action"><i class="fas fa-book me-2 text-primary"></i> Hướng dẫn sử dụng</a>
-                    <a href="chart.html" class="list-group-item list-group-item-action"><i class="fas fa-chart-line me-2 text-warning"></i> Thống kê & Báo cáo</a>
-                    <button class="list-group-item list-group-item-action" onclick="alert('V4.7: Thêm bộ lọc theo Nhóm')">Thông tin Phiên bản 4.7</button>
-                    <a id="btnUserManager" href="user.html" class="list-group-item list-group-item-action d-none text-primary fw-bold mt-2"><i class="fas fa-users-cog"></i> Quản lý Nhân sự (Admin)</a>
+                <div class="input-group">
+                    <select id="mobileLineSelect" class="form-select" onchange="handleLineChange()">
+                        <option value="">-- Đang tải... --</option>
+                    </select>
+                    <button id="btnAssign" class="btn btn-outline-primary d-none" onclick="openAssignModal()"><i class="fas fa-user-tag"></i></button>
+                    <button id="btnAddLine" class="btn btn-success d-none" onclick="openCreateModal()"><i class="fas fa-plus"></i></button>
                 </div>
             </div>
         </div>
 
-        <div class="app-header">
-            <button class="menu-btn" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i class="fas fa-bars"></i></button>
-            <h6 class="m-0 fw-bold">Kiểm tra hồ sơ v4.7 <span id="headerLockStatus" class="badge bg-danger ms-2" style="display:none"><i class="fas fa-lock"></i></span></h6>
-            <div style="width: 24px;"></div>
-        </div>
-        <button class="fab-switch" onclick="toggleView()"><i class="fas fa-sync"></i> View</button>
-
-        <div id="view-mobile" class="container pb-5">
-            <div class="card mx-2 mb-4 shadow-sm">
-                <div class="card-body p-3">
-                    <label class="form-label small text-muted fw-bold">TÌM KIẾM & LỌC:</label>
-                    
-                    <div class="row g-2 mb-2">
-                        <div class="col-8">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
-                                <input type="text" id="lineSearchInput" class="form-control border-start-0" placeholder="Tên tuyến..." oninput="filterLines()">
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <select id="groupFilterSelect" class="form-select fw-bold text-primary" onchange="filterLines()">
-                                <option value="">Tất cả</option>
-                                <option value="1">Nhóm 1</option>
-                                <option value="2">Nhóm 2</option>
-                                <option value="3">Nhóm 3</option>
-                                <option value="4">Nhóm 4</option>
-                                <option value="5">Lãnh đạo</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="input-group">
-                        <select id="mobileLineSelect" class="form-select" onchange="handleLineChange()">
-                            <option value="">-- Đang tải dữ liệu... --</option>
-                        </select>
-                        <button id="btnAssign" class="btn btn-primary d-none" onclick="openAssignModal()" title="Phân công"><i class="fas fa-users"></i></button>
-                        <button id="btnAddLine" class="btn btn-success d-none" onclick="openCreateModal()"><i class="fas fa-plus"></i></button>
-                    </div>
-                    
-                    <div id="managerInfo" class="alert alert-info mt-2 py-1 small d-none">
-                        <i class="fas fa-user-shield"></i> Quản lý: <b id="lblManagerName">...</b>
-                    </div>
-
-                    <div id="adminControls" class="mt-2 d-none d-flex justify-content-end gap-2">
-                        <button class="btn btn-sm btn-warning" onclick="toggleLockLine()"><i class="fas fa-lock"></i> Khóa/Mở</button>
-                        <button class="btn btn-sm btn-danger" onclick="handleDeleteLine()"><i class="fas fa-trash"></i> Xóa</button>
-                    </div>
-                    <div id="permMessage" class="alert alert-warning mt-2 d-none py-1 small"><i class="fas fa-exclamation-triangle"></i> Bạn không thuộc nhóm quản lý tuyến này (Chỉ xem).</div>
-                </div>
-            </div>
-            <div id="mobileRecordList" class="px-2 pb-5">
-                <div class="text-center mt-5 text-muted small">Vui lòng chọn tuyến dây</div>
-            </div>
-        </div>
-
-        <div id="view-dashboard" class="container-fluid p-4 d-none">
-            <h4 class="text-primary mb-3">Tổng hợp Tiến độ</h4>
-            <div class="card"><div class="card-body"><table class="table"><tbody id="dashboardTableBody"></tbody></table></div></div>
-        </div>
+        <div id="mobileRecordList" class="px-2"></div>
     </div>
-
-    <div class="modal fade" id="viewDocModal" tabindex="-1"><div class="modal-dialog modal-fullscreen"><div class="modal-content"><div class="modal-header bg-dark text-white p-2"><h6 class="modal-title m-0">Xem Tài Liệu</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-0" style="background: #333;"><iframe id="docFrame" style="width:100%; height:100%; border:none;" allow="autoplay"></iframe></div></div></div></div>
-    <div id="cameraOverlay"><div class="cam-header"><button class="btn btn-sm btn-outline-light rounded-pill" onclick="closeCamera()">Đóng</button><span class="text-white small">Camera</span><button class="btn btn-sm btn-outline-light rounded-pill" onclick="switchCamera()">Đổi Cam</button></div><video id="cameraVideo" autoplay playsinline muted></video><canvas id="cameraCanvas" style="display:none"></canvas><div id="camPreviewBar" class="cam-preview-bar"></div><div class="cam-footer"><div style="width:60px"></div><button class="btn-shutter" onclick="takePhoto()"></button><button class="btn btn-success fw-bold rounded-pill px-3" onclick="finishScanAndUpload()">Lưu (<span id="camCount">0</span>)</button></div></div>
-    <div class="modal fade" id="createLineModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Thêm Tuyến</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="text" id="newLineName" class="form-control" placeholder="Tên tuyến..."></div><div class="modal-footer"><button class="btn btn-primary" onclick="handleCreateLine()">Tạo</button></div></div></div></div>
-    <div class="modal fade" id="assignModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title">Phân công Người quản lý</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p class="small text-muted">Chọn 1 người chịu trách nhiệm chính. Các thành viên cùng Nhóm với người này sẽ tự động được hỗ trợ cập nhật.</p><select id="managerSelect" class="form-select"></select></div><div class="modal-footer"><button class="btn btn-primary w-100" onclick="saveAssignment()">Lưu Thay Đổi</button></div></div></div></div>
 
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
@@ -158,239 +43,29 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+    <script src="config.js"></script>
+    <script src="layout.js"></script>
+
     <script>
-        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); }); }
-
-        const firebaseConfig = { apiKey: "AIzaSyALxXDNbFdXkI7XvHqiSNb1jnKjj0CbYnE", authDomain: "qldd-2025.firebaseapp.com", databaseURL: "https://qldd-2025-default-rtdb.firebaseio.com", projectId: "qldd-2025", storageBucket: "qldd-2025.firebasestorage.app", messagingSenderId: "84684010166", appId: "1:84684010166:web:bd9c3b5ae4227ee2812c17", measurementId: "G-7E5BDTCSEZ" };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const auth = firebase.auth();
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzkobBHYC86WLwPgU3nXVxXLXkxxUt3fvmsPMof8-Tww_jN3FdsELmnS2p-f0ipnqif/exec'; 
-        const ADMIN_EMAIL = 'deptc.qldd2025@gmail.com';
-
-        const DOC_CATEGORIES = {
-            QLVH: [ { id: 'thong_so_ky_thuat', name: 'Thông số kỹ thuật ĐZ' }, { id: 'theo_doi_dong_cat', name: 'Bảng theo dõi đóng cắt' }, { id: 'theo_doi_su_co', name: 'Bảng Theo dõi Sự cố' }, { id: 'theo_doi_phu_tai', name: 'Bảng thao dõi Phụ tải' }, { id: 'theo_doi_hanh_lang', name: 'Bảng Theo dõi kỹ thuật hành lang' }, { id: 'theo_doi_dai_tu', name: 'Bảng theo dõi công tác đại tu' }, { id: 'tong_hop_ton_tai', name: 'Bảng tổng hợp tồn tại' }, { id: 'bang_phan_bo_cot', name: 'Bảng phân bố cột' }, { id: 'bang_giao_cheo', name: 'Bảng giao chéo' }, { id: 'bang_do_do_vong', name: 'Bảng đo độ võng' }, { id: 'bao_cao_nhiet_do', name: 'Bảng báo cáo nhiệt độ' }, { id: 'bao_cao_dien_tro', name: 'Bảng báo cáo điện trở' }, { id: 'ho_so_thu_tu_pha', name: 'Hồ sơ thứ tự pha' }, { id: 'hinh_anh_tru', name: 'Hình Ảnh trụ' }, { id: 'bb_ktdk_ngay', name: 'Biên bản KTĐK ngày' }, { id: 'bb_ktdk_dem', name: 'Biên bản KTĐK đêm' }, { id: 'theo_doi_nha_cong_trinh', name: 'Hồ sơ theo dõi nhà/công trình' } ],
-            THIET_KE: [ { id: 'hs_mong_tru', name: 'Hồ sơ móng trụ' }, { id: 'hs_den_bu', name: 'Hồ sơ đền bù' }, { id: 'hs_nghiem_thu', name: 'Hồ sơ nghiệm thu' }, { id: 'hs_thiet_ke', name: 'Hồ sơ thiết kế' }, { id: 'hs_du_thau', name: 'Hồ sơ dự thầu' } ],
-            HOAN_CONG: [ { id: 'hc_phan_mong_tru', name: 'Hồ sơ hoàn công phần móng trụ' }, { id: 'hc_phan_tru', name: 'Hồ sơ hoàn công phần trụ' }, { id: 'bv_hc_phan_mong', name: 'Bản vẽ hoàn công phần móng' }, { id: 'bv_hc_phan_tru', name: 'Bản vẽ hoàn công phần trụ' }, { id: 'bv_hc_cap', name: 'Bản vẽ hoàn công hầm cáp, tuyến cáp, mốc cáp' }, { id: 'ban_do_dien_tro', name: 'Bản đo điện trở' }, { id: 'ban_do_do_vong', name: 'Bản đo độ võng' }, { id: 'ban_quan_trac_tru', name: 'Bản quan trắc trụ' }, { id: 'toa_do_vn2000', name: 'Tọa độ VN2000 phần DDK và cáp ngầm' }, { id: 'ban_phan_bo_cot', name: 'Bản phân bố cột' }, { id: 'so_do_thu_tu_pha', name: 'Sơ đồ thứ tự pha' }, { id: 'ban_giao_cheo_gt', name: 'Bản giao chéo đường bộ, sắt, sông' }, { id: 'ban_giao_cheo_dien', name: 'Bản giao chéo lưới điện và đèn chiếu sáng' }, { id: 'tk_nha_hanh_lang', name: 'Bảng thống kê nhà trong hành lang' }, { id: 'tk_nha_25m', name: 'Bảng thống kê nhà trong phạm vị 25 mét' }, { id: 'hs_boi_thuong', name: 'Hồ sơ bồi thường' } ]
+        // Hàm này sẽ được layout.js gọi khi đăng nhập xong
+        window.onAuthSuccess = function(user, userData) {
+            document.getElementById('mainContent').style.display = 'block';
+            
+            // Logic hiển thị nút theo Group
+            if(userData.group == 5) {
+                document.getElementById('btnAddLine').classList.remove('d-none');
+                document.getElementById('btnAssign').classList.remove('d-none');
+            }
+            
+            loadLinesData(); // Bắt đầu tải dữ liệu
         };
 
-        let currentUser = null, currentUserStatus = {}, currentLineId = '', allLinesData = {}, allUsersData = {}, capturedPages = [], scanContext = {};
-        let isDataLoaded = false;
-
-        function setSafeText(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
-        function setSafeSrc(id, src) { const el = document.getElementById(id); if (el && src) el.src = src; }
-
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                currentUser = user;
-                showLoading(true, "Đang kết nối Server...");
-                document.getElementById('loginScreen').classList.add('d-none');
-                setTimeout(() => { if (!isDataLoaded) { showLoading(false); document.getElementById('mainApp').classList.remove('d-none'); } }, 5000);
-                registerUser(user);
-                initDataListeners();
-            } else {
-                currentUser = null;
-                document.getElementById('loginScreen').classList.remove('d-none');
-                document.getElementById('mainApp').classList.add('d-none');
-                showLoading(false);
-            }
-        });
-
-        function showLoading(show, text="Đang xử lý...") {
-            setSafeText('loadingText', text);
-            const el = document.getElementById('loadingOverlay');
-            if(el) el.style.display = show ? 'block' : 'none';
+        function loadLinesData() {
+            // ... (Copy logic tải db.ref('lines') từ bản cũ vào đây) ...
+            // ... Thay vì viết hết vào 1 file, ta viết gọn ở đây ...
         }
-
-        function forceClear() {
-            if('caches' in window) caches.keys().then(names => { names.forEach(name => caches.delete(name)); });
-            window.location.reload(true);
-        }
-
-        function registerUser(user) {
-            const safeKey = user.email.replace(/\./g, '_');
-            db.ref('app_users/' + safeKey).transaction(d => {
-                if(d) return {...d, last_login: new Date().toISOString(), photo: user.photoURL};
-                else return { email: user.email, real_name: user.displayName, photo: user.photoURL, group: 0, is_blocked: false, last_login: new Date().toISOString() };
-            });
-        }
-
-        function handleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-        function handleLogout() { auth.signOut().then(() => location.reload()); }
         
-        function initDataListeners() {
-            db.ref('app_users').on('value', snap => {
-                allUsersData = snap.val() || {};
-                const myKey = currentUser.email.replace(/\./g, '_');
-                if (allUsersData[myKey]) {
-                    currentUserStatus = allUsersData[myKey];
-                    setSafeText('menuUserName', allUsersData[myKey].real_name || currentUser.displayName);
-                    setSafeText('menuUserEmail', currentUser.email);
-                    setSafeSrc('menuUserAvatar', currentUser.photoURL);
-                    
-                    const grp = currentUserStatus.group !== undefined ? currentUserStatus.group : 0;
-                    const roleName = grp == 5 ? "Lãnh đạo / CBKT (Nhóm 5)" : (grp == 0 ? "Chỉ xem (Nhóm 0)" : `Tổ ${grp}`);
-                    setSafeText('menuUserRole', roleName);
-                    
-                    const isSuperAdmin = (grp == 5) || (currentUser.email === ADMIN_EMAIL);
-                    
-                    if (isSuperAdmin) {
-                        document.getElementById('btnAddLine').classList.remove('d-none');
-                        document.getElementById('btnAssign').classList.remove('d-none');
-                        document.getElementById('btnUserManager').classList.remove('d-none');
-                        document.getElementById('adminControls').classList.remove('d-none');
-                        document.getElementById('adminControls').classList.add('d-flex');
-                    }
-                }
-            });
-
-            db.ref('lines').on('value', snap => {
-                isDataLoaded = true;
-                allLinesData = snap.val() || {};
-                filterLines(); 
-                renderDashboard();
-                if (currentLineId && allLinesData[currentLineId]) {
-                    renderMobileList(allLinesData[currentLineId]);
-                } else if (!currentLineId) {
-                    const el = document.getElementById('mobileRecordList');
-                    if(el) el.innerHTML = '<div class="text-center mt-5 text-muted small fst-italic">Vui lòng chọn tuyến dây để xem</div>';
-                }
-                showLoading(false);
-                document.getElementById('mainApp').classList.remove('d-none');
-            }, (error) => {
-                showLoading(false);
-                alert("Lỗi tải dữ liệu: " + error.code);
-                document.getElementById('mainApp').classList.remove('d-none');
-            });
-        }
-
-        // --- FILTER LINES (SEARCH & GROUP) ---
-        function filterLines() {
-            const keyword = document.getElementById('lineSearchInput').value.toLowerCase();
-            const groupFilter = document.getElementById('groupFilterSelect').value; // Get group value (1,2,3,4,5 or "")
-            
-            const filtered = {};
-            if (allLinesData) {
-                for (const [id, data] of Object.entries(allLinesData)) { 
-                    // 1. Check Name
-                    const matchName = data.name && data.name.toLowerCase().includes(keyword);
-                    
-                    // 2. Check Group (Logic mới)
-                    let matchGroup = true;
-                    if (groupFilter !== "") {
-                        const mgrEmail = data.manager_email;
-                        if (!mgrEmail) {
-                            matchGroup = false; // Không có quản lý -> Không thuộc nhóm nào
-                        } else {
-                            const mgrKey = mgrEmail.replace(/\./g, '_');
-                            const mgrData = allUsersData[mgrKey];
-                            const mgrGrp = mgrData ? mgrData.group : -1;
-                            matchGroup = (mgrGrp == groupFilter);
-                        }
-                    }
-
-                    if (matchName && matchGroup) filtered[id] = data; 
-                }
-            }
-            renderLineSelect(filtered);
-        }
-
-        function renderLineSelect(linesToRender) { const s = document.getElementById('mobileLineSelect'); const cur = s.value || currentLineId; s.innerHTML = '<option value="">-- Chọn tuyến --</option>'; if (!linesToRender) return; Object.keys(linesToRender).sort((a,b) => { const nA = linesToRender[a].name || ''; const nB = linesToRender[b].name || ''; return nA.localeCompare(nB); }).forEach(id => { s.innerHTML += `<option value="${id}">${linesToRender[id].name}</option>`; }); if (cur && linesToRender[cur]) s.value = cur; }
-        function handleLineChange() { currentLineId = document.getElementById('mobileLineSelect').value; if(currentLineId && allLinesData[currentLineId]) renderMobileList(allLinesData[currentLineId]); else document.getElementById('mobileRecordList').innerHTML = ''; }
-        
-        // ... (GIỮ NGUYÊN CÁC HÀM CÒN LẠI) ...
-        function canEditLine() { if (currentUserStatus.is_blocked) return false; const myGroup = currentUserStatus.group !== undefined ? currentUserStatus.group : 0; if (myGroup == 5 || currentUser.email === ADMIN_EMAIL) return true; if (myGroup == 0) return false; const line = allLinesData[currentLineId]; if (!line) return false; if (line.is_locked) return false; const managerEmail = line.manager_email; if (currentUser.email === managerEmail) return true; if (managerEmail) { const managerKey = managerEmail.replace(/\./g, '_'); const managerData = allUsersData[managerKey]; if (managerData && managerData.group == myGroup) return true; } return false; }
-        function openAssignModal() { if(!currentLineId) return alert("Chọn tuyến trước!"); const myGroup = currentUserStatus.group !== undefined ? currentUserStatus.group : 0; if (myGroup != 5 && currentUser.email !== ADMIN_EMAIL) return alert("Chỉ Lãnh đạo mới được phân công!"); const select = document.getElementById('managerSelect'); select.innerHTML = '<option value="">-- Chưa gán --</option>'; const line = allLinesData[currentLineId]; Object.entries(allUsersData).forEach(([k, u]) => { const uGrp = u.group !== undefined ? u.group : 0; if (uGrp >= 1 && uGrp <= 5) { const isSelected = line.manager_email === u.email ? 'selected' : ''; select.innerHTML += `<option value="${u.email}" ${isSelected}>[Nhóm ${uGrp}] ${u.real_name || u.email}</option>`; } }); new bootstrap.Modal(document.getElementById('assignModal')).show(); }
-        function saveAssignment() { const email = document.getElementById('managerSelect').value; db.ref(`lines/${currentLineId}/manager_email`).set(email).then(() => { bootstrap.Modal.getInstance(document.getElementById('assignModal')).hide(); alert("Đã cập nhật người quản lý!"); }); }
-        
-        function openCreateModal() { if(isBlockedUser()) return; new bootstrap.Modal(document.getElementById('createLineModal')).show(); }
-        function handleCreateLine() { const name = document.getElementById('newLineName').value; if(!name.trim()) return; const newId = 'line_' + Date.now(); db.ref('lines/' + newId).set({ name, created_at: new Date().toISOString(), created_by: currentUser.email, manager_email: currentUser.email, is_locked: false }).then(() => { bootstrap.Modal.getInstance(document.getElementById('createLineModal')).hide(); document.getElementById('newLineName').value = ''; currentLineId = newId; setTimeout(() => { renderLineSelect(allLinesData); document.getElementById('mobileLineSelect').value = newId; renderMobileList({name, records:{}}); }, 300); }); }
-        function isBlockedUser() { return currentUserStatus.is_blocked; }
-        function getRealName(email) { if(!email) return 'Ẩn danh'; const k=email.replace(/\./g,'_'); return (allUsersData[k]?.real_name) ? allUsersData[k].real_name : email; }
-        function formatTime(iso) { if(!iso) return ''; const d=new Date(iso); return `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')} ${d.getDate()}/${d.getMonth()+1}`; }
-        
-        function renderMobileList(lineData) {
-            const container = document.getElementById('mobileRecordList');
-            const isLocked = lineData.is_locked === true;
-            document.getElementById('headerLockStatus').style.display = isLocked ? 'inline' : 'none';
-            const allowEdit = canEditLine();
-            const permMsg = document.getElementById('permMessage');
-            const mgrEmail = lineData.manager_email;
-            if(mgrEmail) {
-                const mgrKey = mgrEmail.replace(/\./g, '_');
-                const mgrData = allUsersData[mgrKey];
-                const mgrGroup = mgrData && mgrData.group !== undefined ? mgrData.group : '?';
-                document.getElementById('lblManagerName').innerText = `${getRealName(mgrEmail)} (Nhóm ${mgrGroup})`;
-                document.getElementById('managerInfo').classList.remove('d-none');
-            } else {
-                document.getElementById('lblManagerName').innerText = "Chưa gán";
-                document.getElementById('managerInfo').classList.remove('d-none');
-            }
-            if(allowEdit) { container.classList.remove('readonly-mode'); permMsg.classList.add('d-none'); } 
-            else { container.classList.add('readonly-mode'); permMsg.classList.remove('d-none'); }
-
-            let html = '';
-            const renderGroup = (title, items) => {
-                let h = `<h6 class="text-uppercase fw-bold text-muted mt-4 ps-2 border-start border-4 border-primary">${title}</h6>`;
-                items.forEach(i => {
-                    const rec = (lineData.records && lineData.records[i.id]) ? lineData.records[i.id] : {};
-                    const files = rec.files || {};
-                    const hasFile = Object.keys(files).length > 0;
-                    const isNoRecord = rec.no_record === true;
-                    let icon = hasFile ? 'fa-check-circle text-success' : (isNoRecord ? 'fa-ban text-danger' : 'fa-circle text-secondary');
-                    h += `<div class="card record-card"><div class="record-header" onclick="this.nextElementSibling.classList.toggle('show')"><span><i class="fas ${icon} me-2"></i>${i.name}</span><i class="fas fa-chevron-down small text-muted"></i></div><div class="card-content show bg-white">`;
-                    if(isNoRecord) h += `<div class="status-no-record"><i class="fas fa-user-times"></i> Đã kiểm tra (0 HS) - ${getRealName(rec.no_record_user)}</div>`;
-                    for (const [fId, fData] of Object.entries(files)) {
-                        const canDel = allowEdit && ((currentUserStatus.group == 5) || fData.user === currentUser.email);
-                        const delBtn = canDel ? `<button class="btn btn-sm text-danger ms-2 btn-delete-file" onclick="deleteFile('${currentLineId}','${i.id}','${fId}','${fData.user}')"><i class="fas fa-times"></i></button>` : '';
-                        h += `<div class="file-item"><div><div class="file-note" onclick="viewDocument('${fData.link}')">${fData.note||'Tài liệu'}</div><span class="file-meta"><i class="fas fa-user-edit"></i> ${getRealName(fData.user)} <i class="fas fa-clock ms-2"></i> ${formatTime(fData.created_at)}</span></div><div><button class="btn btn-sm btn-outline-primary" onclick="viewDocument('${fData.link}')"><i class="fas fa-eye"></i></button>${delBtn}</div></div>`;
-                    }
-                    h += `<div class="action-bar d-flex gap-2"><button class="btn btn-sm ${isNoRecord?'btn-danger':'btn-outline-secondary'}" onclick="toggleNoRecord('${i.id}')">${isNoRecord?'Hủy':'0 HS'}</button><input type="text" id="note_${i.id}" class="form-control form-control-sm" placeholder="Ghi chú..."><div class="btn-group"><button class="btn btn-sm btn-warning text-white" onclick="prepareScan('${i.id}')"><i class="fas fa-camera"></i></button><div class="btn btn-sm btn-secondary upload-btn-wrapper"><i class="fas fa-upload"></i><input type="file" onchange="handleUpload(this, '${i.id}')" ${isNoRecord?'disabled':''}></div></div></div></div></div>`;
-                });
-                return h;
-            };
-            html += renderGroup('1. Hồ sơ Kỹ thuật', DOC_CATEGORIES.QLVH);
-            html += renderGroup('2. Hồ sơ Thiết kế', DOC_CATEGORIES.THIET_KE);
-            html += renderGroup('3. Hồ sơ Hoàn công', DOC_CATEGORIES.HOAN_CONG);
-            container.innerHTML = html;
-        }
-
-        let videoStream = null; let facingMode = 'environment'; 
-        async function startCamera() { const video = document.getElementById('cameraVideo'); if(videoStream) videoStream.getTracks().forEach(t => t.stop()); try { videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } } }); video.srcObject = videoStream; document.getElementById('cameraOverlay').style.display = 'flex'; setSafeText('camStatus', "Đã bật Camera"); } catch (err) { alert("Lỗi Camera: " + err); document.getElementById('cameraOverlay').style.display = 'none'; } }
-        function switchCamera() { facingMode = (facingMode === 'environment') ? 'user' : 'environment'; startCamera(); }
-        function takePhoto() { const video = document.getElementById('cameraVideo'); const canvas = document.getElementById('cameraCanvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; const ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0); capturedPages.push(canvas.toDataURL('image/jpeg', 0.7)); renderCamThumbs(); setSafeText('camCount', capturedPages.length); const overlay = document.getElementById('cameraOverlay'); overlay.style.opacity = 0.5; setTimeout(() => overlay.style.opacity = 1, 100); }
-        function renderCamThumbs() { const bar = document.getElementById('camPreviewBar'); bar.style.display = capturedPages.length ? 'block' : 'none'; bar.innerHTML = ''; capturedPages.forEach((img, idx) => { bar.innerHTML += `<div class="cam-thumb-box"><img src="${img}" class="cam-thumb-img"><button class="btn-del-thumb" onclick="removePage(${idx})">x</button></div>`; }); }
-        function removePage(idx) { capturedPages.splice(idx, 1); renderCamThumbs(); setSafeText('camCount', capturedPages.length); }
-        function closeCamera() { if(videoStream) videoStream.getTracks().forEach(t => t.stop()); document.getElementById('cameraOverlay').style.display = 'none'; }
-        function prepareScan(docId) { if(!canEditLine()) return; const note = document.getElementById(`note_${docId}`).value; if (!note.trim()) return alert("Nhập tên tài liệu!"); scanContext = { lineId: currentLineId, docId, note: note.trim() }; capturedPages = []; setSafeText('camCount', "0"); renderCamThumbs(); startCamera(); }
-        function finishScanAndUpload() { if(capturedPages.length === 0) return alert("Chưa chụp ảnh!"); if (!window.jspdf) { alert("Đang tải thư viện PDF..."); return; } closeCamera(); showLoading(true, "Đang tạo PDF..."); setTimeout(() => { try { const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4'); const pw = doc.internal.pageSize.getWidth(); capturedPages.forEach((img, i) => { if(i > 0) doc.addPage(); const p = doc.getImageProperties(img); doc.addImage(img, 'JPEG', 10, 10, pw - 20, (p.height * (pw - 20)) / p.width); }); const base64 = doc.output('datauristring').split(',')[1]; sendToScript(base64, 'application/pdf', `SCAN_${Date.now()}.pdf`, scanContext.note, scanContext.docId); } catch(e) { alert("Lỗi PDF: " + e); showLoading(false); } }, 500); }
-        function sendToScript(b64, type, name, note, id) { showLoading(true, "Đang gửi dữ liệu..."); fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ base64: b64, mimeType: type, filename: name }) }).then(r => r.json()).then(d => { if (d.status === 'success') { db.ref(`lines/${currentLineId}/records/${id}/files`).push({ link: d.url, note: note, created_at: new Date().toISOString(), user: currentUser.email }); alert("Thành công!"); document.getElementById(`note_${id}`).value = ''; } else alert("Lỗi Server: " + d.message); }).catch(e => alert("Lỗi Mạng: " + e)).finally(() => showLoading(false)); }
-        function handleUpload(input, docId) { if(!canEditLine()) { input.value=''; return; } const file=input.files[0], note=document.getElementById(`note_${docId}`).value; if(!file || !note.trim()) { input.value=''; return alert("Nhập tên tài liệu!"); } showLoading(true, "Đang xử lý..."); const r=new FileReader(); r.readAsDataURL(file); r.onload=e=>sendToScript(e.target.result.split(',')[1], file.type, `${currentLineId}_${docId}_${file.name}`, note, docId); }
-        function viewDocument(link) { let previewLink = link; if (link.includes('drive.google.com')) { if(link.includes('/view')) previewLink = link.replace(/\/view.*/, '/preview'); else previewLink = link + '/preview'; } document.getElementById('docFrame').src = previewLink; new bootstrap.Modal(document.getElementById('viewDocModal')).show(); }
-        function toggleNoRecord(docId) { if(!canEditLine()) return; const rec = (allLinesData[currentLineId].records||{})[docId] || {}; if(rec.no_record) { if(confirm("Hủy trạng thái?")) db.ref(`lines/${currentLineId}/records/${docId}/no_record`).remove(); } else { if(confirm("Xác nhận KHÔNG CÓ HỒ SƠ?")) db.ref(`lines/${currentLineId}/records/${docId}`).update({ no_record: true, no_record_user: currentUser.email }); } }
-        function deleteFile(lId, dId, fId, owner) { if(!canEditLine()) return; if((currentUserStatus.group != 5) && owner !== currentUser.email) return alert("Không thể xóa file của người khác!"); if(confirm("Xóa file này?")) db.ref(`lines/${lId}/records/${dId}/files/${fId}`).remove(); }
-        function toggleLockLine() { if(!currentLineId) return; const s=allLinesData[currentLineId].is_locked; if(confirm(s?"MỞ KHÓA?":"KHÓA TUYẾN?")) db.ref('lines/'+currentLineId).update({is_locked:!s}); }
-        function handleDeleteLine() { if(!currentLineId) return; if(confirm("XÓA VĨNH VIỄN?")) db.ref('lines/'+currentLineId).remove().then(()=>currentLineId=''); }
-        
-        function renderDashboard() {
-            const tb = document.getElementById('dashboardTableBody'); tb.innerHTML = '';
-            let tL=0, tF=0; const PER_LINE = DOC_CATEGORIES.QLVH.length + DOC_CATEGORIES.THIET_KE.length + DOC_CATEGORIES.HOAN_CONG.length;
-            Object.entries(allLinesData).forEach(([id, l]) => {
-                tL++; let done=0;
-                if(l.records) Object.values(l.records).forEach(rec => { if((rec.files && Object.keys(rec.files).length>0) || rec.link || rec.no_record) done++; });
-                tF += done;
-                const delBtn = (currentUserStatus.group == 5) ? `<button class="btn btn-sm btn-danger ms-1" onclick="handleDeleteLine('${id}')"><i class="fas fa-trash"></i></button>` : '';
-                const lockIcon = (l.is_locked === true) ? '<i class="fas fa-lock text-danger ms-2" title="Đã khóa"></i>' : '';
-                const pct = Math.round((done / PER_LINE) * 100);
-                const printBtn = `<button class="btn btn-sm btn-secondary ms-1" onclick="window.open('print.html?id=${id}', '_blank')"><i class="fas fa-print"></i></button>`;
-                tb.innerHTML += `<tr><td>${l.name} ${lockIcon}</td><td><div class="progress" style="height:10px"><div class="progress-bar ${pct==100?'bg-success':'bg-warning'}" style="width:${pct}%"></div></div><small>${pct}%</small></td><td><button class="btn btn-sm btn-info text-white" onclick="viewDetail('${id}')"><i class="fas fa-eye"></i></button>${printBtn}${delBtn}</td></tr>`;
-            });
-            setSafeText('totalLines', tL);
-            setSafeText('totalCompletedDocs', tF);
-        }
-        function viewDetail(id) { currentLineId = id; document.getElementById('mobileLineSelect').value = id; renderMobileList(allLinesData[id]); toggleView(); }
-        let isMobile = true;
-        function toggleView() { const m=document.getElementById('view-mobile'), d=document.getElementById('view-dashboard'); if(isMobile) { m.classList.add('d-none'); d.classList.remove('d-none'); } else { d.classList.add('d-none'); m.classList.remove('d-none'); } isMobile = !isMobile; }
+        // ... (Copy các hàm filterLines, renderMobileList... vào đây) ...
     </script>
 </body>
 </html>
