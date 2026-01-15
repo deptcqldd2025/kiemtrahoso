@@ -1,135 +1,128 @@
-// layout.js - Quản lý Giao diện & Auth
+// layout.js - Tự động hóa giao diện & Auth
 
-// Khởi tạo Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const auth = firebase.auth();
-
-let currentUser = null;
-let currentUserRole = 0; // Mặc định nhóm 0
-
-// 1. TỰ ĐỘNG VẼ UI KHI TRANG LOAD
-document.addEventListener('DOMContentLoaded', () => {
-    renderBaseUI();
-    checkAuth();
-});
-
-function renderBaseUI() {
-    // --- LOGIN SCREEN ---
-    if (!document.getElementById('loginScreen')) {
-        const loginDiv = document.createElement('div');
-        loginDiv.id = 'loginScreen';
-        loginDiv.innerHTML = `
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="80" class="mb-4">
-            <h4 class="mb-3 text-primary fw-bold">Sổ Tay Đường Dây</h4>
-            <button class="btn btn-outline-dark btn-lg px-4" onclick="handleLogin()">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" class="me-2"> Đăng nhập
-            </button>
-            <small class="mt-4 text-muted">Version 5.0 (Modular)</small>
-        `;
-        document.body.appendChild(loginDiv);
-    }
-
-    // --- LOADING OVERLAY ---
+// --- 1. HÀM KHỞI TẠO GIAO DIỆN ---
+function initAppLayout(pageTitle) {
+    // A. Render Loading
     if (!document.getElementById('loadingOverlay')) {
-        const loadDiv = document.createElement('div');
-        loadDiv.id = 'loadingOverlay';
-        loadDiv.innerHTML = `<div class="spinner-border text-primary" role="status"></div><p class="mt-3 fw-bold" id="loadingText">Đang tải...</p>`;
-        document.body.appendChild(loadDiv);
+        document.body.insertAdjacentHTML('beforeend', `
+            <div id="loadingOverlay">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-3 fw-bold" id="loadingText">Đang tải...</p>
+            </div>
+        `);
     }
 
-    // --- HEADER (Nếu trang có div #app-header-placeholder) ---
-    const headerPlace = document.getElementById('app-header-placeholder');
-    if (headerPlace) {
-        headerPlace.innerHTML = `
-            <div class="app-header">
-                <button class="menu-btn" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i class="fas fa-bars"></i></button>
-                <h6 class="m-0 fw-bold" id="pageTitle">Sổ Tay QLDD</h6>
-                <div style="width: 24px;"></div>
+    // B. Render Login
+    if (!document.getElementById('loginScreen')) {
+        document.body.insertAdjacentHTML('beforeend', `
+            <div id="loginScreen">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="80" class="mb-4">
+                <h4 class="mb-3 text-primary fw-bold">Sổ Tay Đường Dây</h4>
+                <button class="btn btn-outline-dark btn-lg px-4" onclick="handleLogin()">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" class="me-2"> Đăng nhập
+                </button>
+                <small class="mt-4 text-muted">Version 5.0</small>
             </div>
-        `;
+        `);
     }
 
-    // --- SIDEBAR MENU ---
-    const menuDiv = document.createElement('div');
-    menuDiv.className = 'offcanvas offcanvas-start';
-    menuDiv.tabIndex = -1;
-    menuDiv.id = 'sidebarMenu';
-    menuDiv.innerHTML = `
-        <div class="offcanvas-header bg-primary text-white"><h5 class="offcanvas-title">Menu</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button></div>
-        <div class="offcanvas-body">
-            <div class="text-center mb-4">
-                <img id="menuAvatar" src="" style="width:60px;height:60px;border-radius:50%;background:#eee">
-                <div class="fw-bold mt-2" id="menuName">...</div>
-                <div class="small text-muted" id="menuRole">Loading...</div>
-                <button class="btn btn-sm btn-outline-danger mt-2" onclick="handleLogout()">Đăng xuất</button>
+    // C. Render Sidebar Menu
+    const menuHTML = `
+        <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu">
+            <div class="offcanvas-header bg-primary text-white">
+                <h5 class="offcanvas-title">Menu Hệ Thống</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
             </div>
-            <div class="list-group list-group-flush" id="menuList">
-                <a href="index.html" class="list-group-item list-group-item-action"><i class="fas fa-home me-2"></i> Trang chủ (Hồ sơ)</a>
-                <a href="chart.html" class="list-group-item list-group-item-action"><i class="fas fa-chart-line me-2"></i> Thống kê</a>
-                <a href="huong_dan.html" class="list-group-item list-group-item-action"><i class="fas fa-book me-2"></i> Hướng dẫn</a>
+            <div class="offcanvas-body">
+                <div class="text-center mb-4">
+                    <img id="menuAvatar" src="" style="width:60px;height:60px;border-radius:50%;object-fit:cover">
+                    <div class="fw-bold mt-2" id="menuUserName">Khách</div>
+                    <div class="small text-muted" id="menuUserRole">...</div>
+                    <button class="btn btn-sm btn-outline-danger mt-2" onclick="handleLogout()">Đăng xuất</button>
                 </div>
-        </div>
-    `;
-    document.body.appendChild(menuDiv);
+                <div class="list-group list-group-flush">
+                    <a href="index.html" class="list-group-item list-group-item-action ${isPage('index.html') ? 'active' : ''}"><i class="fas fa-home me-2"></i> Trang chủ (Kiểm tra)</a>
+                    <a href="chart.html" class="list-group-item list-group-item-action ${isPage('chart.html') ? 'active' : ''}"><i class="fas fa-chart-line me-2"></i> Thống kê & Báo cáo</a>
+                    <a href="huong_dan.html" target="_blank" class="list-group-item list-group-item-action"><i class="fas fa-book me-2"></i> Hướng dẫn sử dụng</a>
+                    <a id="btnAdminMenu" href="user.html" class="list-group-item list-group-item-action d-none text-danger fw-bold ${isPage('user.html') ? 'active' : ''}"><i class="fas fa-users-cog me-2"></i> Quản lý Nhân sự</a>
+                </div>
+            </div>
+        </div>`;
+    document.body.insertAdjacentHTML('afterbegin', menuHTML);
+
+    // D. Render Header
+    const headerHTML = `
+        <div class="app-header">
+            <button class="menu-btn" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i class="fas fa-bars"></i></button>
+            <h6 class="m-0 fw-bold">${pageTitle}</h6>
+            <div style="width: 24px;"></div> </div>`;
+    document.body.insertAdjacentHTML('afterbegin', headerHTML);
+
+    // E. Render Footer (Bottom Navigation)
+    const footerHTML = `
+        <div class="app-footer">
+            <a href="index.html" class="nav-item-link ${isPage('index.html') ? 'active' : ''}">
+                <i class="fas fa-home"></i> Trang chủ
+            </a>
+            <a href="chart.html" class="nav-item-link ${isPage('chart.html') ? 'active' : ''}">
+                <i class="fas fa-chart-pie"></i> Thống kê
+            </a>
+            <a href="#" class="nav-item-link" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                <i class="fas fa-bars"></i> Menu
+            </a>
+        </div>`;
+    document.body.insertAdjacentHTML('beforeend', footerHTML);
 }
 
-// 2. XỬ LÝ AUTH CHUNG
-function checkAuth() {
+// Helper: Check current page
+function isPage(name) { return window.location.pathname.includes(name) || (name === 'index.html' && window.location.pathname.endsWith('/')); }
+
+// --- 2. XỬ LÝ AUTH DÙNG CHUNG ---
+function initAuth(onUserLoaded) {
+    showLoading(true, "Đang xác thực...");
     auth.onAuthStateChanged(user => {
         if (user) {
-            currentUser = user;
             document.getElementById('loginScreen').style.display = 'none';
-            showLoading(true, "Đang xác thực...");
-            
-            // Lấy thông tin Role
-            const safeKey = user.email.replace(/\./g, '_');
-            db.ref('app_users/' + safeKey).on('value', snap => {
+            // Load Role
+            const userKey = user.email.replace(/\./g, '_');
+            db.ref('app_users/' + userKey).on('value', snap => {
                 const uData = snap.val();
-                if(uData) {
-                    currentUserRole = uData.group !== undefined ? uData.group : 0;
-                    updateMenuInfo(uData);
-                    // Callback về trang riêng (nếu có hàm onAuthSuccess)
-                    if (typeof window.onAuthSuccess === 'function') window.onAuthSuccess(user, uData);
+                if (uData) {
+                    updateMenu(user, uData);
+                    if (onUserLoaded) onUserLoaded(user, uData); // Callback về trang con
                 } else {
-                    // User mới -> Đăng ký
-                    db.ref('app_users/' + safeKey).set({
-                        email: user.email, real_name: user.displayName, photo: user.photoURL, group: 0, last_login: new Date().toISOString()
-                    });
+                    // New User
+                    db.ref('app_users/' + userKey).set({ email: user.email, real_name: user.displayName, photo: user.photoURL, group: 0 });
                 }
                 showLoading(false);
             });
         } else {
+            currentUser = null;
             document.getElementById('loginScreen').style.display = 'flex';
-            if(document.getElementById('mainContent')) document.getElementById('mainContent').style.display = 'none';
+            showLoading(false);
         }
     });
 }
 
-function updateMenuInfo(uData) {
-    document.getElementById('menuName').innerText = uData.real_name || currentUser.displayName;
-    document.getElementById('menuAvatar').src = currentUser.photoURL;
+function updateMenu(user, uData) {
+    const img = document.getElementById('menuAvatar');
+    if(img) img.src = user.photoURL;
     
-    let roleTxt = `Nhóm ${currentUserRole}`;
-    if (currentUserRole == 5) roleTxt = "Lãnh đạo / Admin (5)";
-    if (currentUserRole == 0) roleTxt = "Chỉ xem (0)";
-    document.getElementById('menuRole').innerText = roleTxt;
+    const nameEl = document.getElementById('menuUserName');
+    if(nameEl) nameEl.innerText = uData.real_name || user.displayName;
 
-    // Inject Admin Menu
-    const menuList = document.getElementById('menuList');
-    const adminLink = document.getElementById('adminLink');
-    
-    if ((currentUserRole == 5 || currentUser.email === ADMIN_EMAIL) && !adminLink) {
-        const a = document.createElement('a');
-        a.id = 'adminLink';
-        a.href = 'user.html';
-        a.className = 'list-group-item list-group-item-action text-danger fw-bold';
-        a.innerHTML = '<i class="fas fa-users-cog me-2"></i> Quản lý Nhân sự';
-        menuList.appendChild(a);
+    const grp = uData.group !== undefined ? uData.group : 0;
+    let roleTxt = grp == 5 ? "Lãnh đạo (Admin)" : (grp == 0 ? "Khách (Chỉ xem)" : `Tổ ${grp}`);
+    const roleEl = document.getElementById('menuUserRole');
+    if(roleEl) roleEl.innerText = roleTxt;
+
+    // Show Admin Menu
+    if (grp == 5 || user.email === ADMIN_EMAIL) {
+        const btnAdmin = document.getElementById('btnAdminMenu');
+        if(btnAdmin) btnAdmin.classList.remove('d-none');
     }
 }
 
-// 3. UTILS CHUNG
 function showLoading(show, text="Đang xử lý...") {
     const el = document.getElementById('loadingOverlay');
     if(el) {
@@ -139,5 +132,4 @@ function showLoading(show, text="Đang xử lý...") {
 }
 
 function handleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-function handleLogout() { auth.signOut().then(() => location.reload()); }
-function getSafeName(email) { return email.split('@')[0]; } // Fallback name
+function handleLogout() { auth.signOut().then(() => window.location.href = "index.html"); }
