@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Đội QLDD - Kiểm tra hồ sơ v4.5</title>
+    <title>Đội QLDD - Kiểm tra hồ sơ v4.6</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d6efd">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon-192.png">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -43,7 +42,8 @@
         .cam-thumb-img { width: 100%; height: 100%; object-fit: cover; }
         .btn-del-thumb { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; border: none; display: flex; align-items: center; justify-content: center; }
         
-        #loadingOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(33, 37, 41, 0.98); z-index: 100000; text-align: center; padding-top: 40vh; color: white; }
+        /* [V4.6] IMPROVED LOADING SCREEN */
+        #loadingOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(33, 37, 41, 0.98); z-index: 100000; text-align: center; padding-top: 35vh; color: white; }
         .spinner-border { width: 3rem; height: 3rem; }
     </style>
 </head>
@@ -55,14 +55,17 @@
         <button class="btn btn-outline-dark btn-lg px-4" onclick="handleLogin()">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" class="me-2"> Đăng nhập Gmail
         </button>
-        <small class="mt-4 text-muted">Phiên bản 4.5 (Groups 0-5)</small>
+        <small class="mt-4 text-muted">Phiên bản 4.6 (Sorted & Assign Fix)</small>
         <div class="mt-3"><button class="btn btn-sm btn-link text-secondary" onclick="forceClear()">Xóa Cache hệ thống</button></div>
     </div>
 
     <div id="loadingOverlay">
+        <img src="icon-192.png" width="60" class="mb-3 rounded-circle shadow">
+        <h4 class="fw-bold mb-1">Đội Quản Lý Đường Dây</h4>
+        <p class="small text-muted mb-4">Ứng dụng Kiểm tra Hồ sơ Lưới điện</p>
         <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-3 fw-bold" id="loadingText">Đang tải...</p>
-        <div id="loadingSub" class="small text-muted"></div>
+        <p class="mt-3 fw-bold text-light" id="loadingText">Đang tải...</p>
+        <div id="loadingSub" class="small text-muted">Version 4.6</div>
     </div>
 
     <div id="mainApp" class="d-none">
@@ -78,7 +81,7 @@
                 <div class="list-group list-group-flush">
                     <a href="huong_dan.html" target="_blank" class="list-group-item list-group-item-action"><i class="fas fa-book me-2 text-primary"></i> Hướng dẫn sử dụng</a>
                     <a href="chart.html" class="list-group-item list-group-item-action"><i class="fas fa-chart-line me-2 text-warning"></i> Thống kê & Báo cáo</a>
-                    <button class="list-group-item list-group-item-action" onclick="alert('V4.5: Phân quyền theo Nhóm (0-5)')">Thông tin Phiên bản 4.5</button>
+                    <button class="list-group-item list-group-item-action" onclick="alert('V4.6: Cập nhật sắp xếp & phân quyền')">Thông tin Phiên bản 4.6</button>
                     <a id="btnUserManager" href="user.html" class="list-group-item list-group-item-action d-none text-primary fw-bold mt-2"><i class="fas fa-users-cog"></i> Quản lý Nhân sự (Admin)</a>
                 </div>
             </div>
@@ -86,7 +89,7 @@
 
         <div class="app-header">
             <button class="menu-btn" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i class="fas fa-bars"></i></button>
-            <h6 class="m-0 fw-bold">Kiểm tra hồ sơ v4.5 <span id="headerLockStatus" class="badge bg-danger ms-2" style="display:none"><i class="fas fa-lock"></i></span></h6>
+            <h6 class="m-0 fw-bold">Kiểm tra hồ sơ v4.6 <span id="headerLockStatus" class="badge bg-danger ms-2" style="display:none"><i class="fas fa-lock"></i></span></h6>
             <div style="width: 24px;"></div>
         </div>
         <button class="fab-switch" onclick="toggleView()"><i class="fas fa-sync"></i> View</button>
@@ -103,9 +106,14 @@
                         <select id="mobileLineSelect" class="form-select" onchange="handleLineChange()">
                             <option value="">-- Đang tải dữ liệu... --</option>
                         </select>
-                        <button id="btnAssign" class="btn btn-primary d-none" onclick="openAssignModal()" title="Phân công"><i class="fas fa-users"></i></button>
+                        <button id="btnAssign" class="btn btn-primary d-none" onclick="openAssignModal()" title="Phân công quản lý"><i class="fas fa-users"></i></button>
                         <button id="btnAddLine" class="btn btn-success d-none" onclick="openCreateModal()"><i class="fas fa-plus"></i></button>
                     </div>
+                    
+                    <div id="managerInfo" class="alert alert-info mt-2 py-1 small d-none">
+                        <i class="fas fa-user-shield"></i> Quản lý chính: <b id="lblManagerName">...</b>
+                    </div>
+
                     <div id="adminControls" class="mt-2 d-none d-flex justify-content-end gap-2">
                         <button class="btn btn-sm btn-warning" onclick="toggleLockLine()"><i class="fas fa-lock"></i> Khóa/Mở</button>
                         <button class="btn btn-sm btn-danger" onclick="handleDeleteLine()"><i class="fas fa-trash"></i> Xóa</button>
@@ -127,7 +135,11 @@
     <div class="modal fade" id="viewDocModal" tabindex="-1"><div class="modal-dialog modal-fullscreen"><div class="modal-content"><div class="modal-header bg-dark text-white p-2"><h6 class="modal-title m-0">Xem Tài Liệu</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-0" style="background: #333;"><iframe id="docFrame" style="width:100%; height:100%; border:none;" allow="autoplay"></iframe></div></div></div></div>
     <div id="cameraOverlay"><div class="cam-header"><button class="btn btn-sm btn-outline-light rounded-pill" onclick="closeCamera()">Đóng</button><span class="text-white small">Camera</span><button class="btn btn-sm btn-outline-light rounded-pill" onclick="switchCamera()">Đổi Cam</button></div><video id="cameraVideo" autoplay playsinline muted></video><canvas id="cameraCanvas" style="display:none"></canvas><div id="camPreviewBar" class="cam-preview-bar"></div><div class="cam-footer"><div style="width:60px"></div><button class="btn-shutter" onclick="takePhoto()"></button><button class="btn btn-success fw-bold rounded-pill px-3" onclick="finishScanAndUpload()">Lưu (<span id="camCount">0</span>)</button></div></div>
     <div class="modal fade" id="createLineModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Thêm Tuyến</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="text" id="newLineName" class="form-control" placeholder="Tên tuyến..."></div><div class="modal-footer"><button class="btn btn-primary" onclick="handleCreateLine()">Tạo</button></div></div></div></div>
-    <div class="modal fade" id="assignModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title">Phân công nhóm</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div id="assignUserList" class="list-group"></div></div><div class="modal-footer"><button class="btn btn-primary w-100" onclick="saveAssignment()">Lưu</button></div></div></div></div>
+    
+    <div class="modal fade" id="assignModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title">Phân công Người quản lý</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+        <p class="small text-muted">Chọn Tổ trưởng/Nhóm trưởng quản lý tuyến này. Các thành viên cùng nhóm sẽ được quyền hỗ trợ.</p>
+        <select id="managerSelect" class="form-select"></select>
+    </div><div class="modal-footer"><button class="btn btn-primary w-100" onclick="saveAssignment()">Lưu Thay Đổi</button></div></div></div></div>
 
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
@@ -188,7 +200,7 @@
             const safeKey = user.email.replace(/\./g, '_');
             db.ref('app_users/' + safeKey).transaction(d => {
                 if(d) return {...d, last_login: new Date().toISOString(), photo: user.photoURL};
-                // [FIX V4.5] Default group 0 (Chỉ xem)
+                // Default group 0 (Chỉ xem)
                 else return { email: user.email, real_name: user.displayName, photo: user.photoURL, group: 0, is_blocked: false, last_login: new Date().toISOString() };
             });
         }
@@ -210,7 +222,7 @@
                     const roleName = grp == 5 ? "Lãnh đạo / CBKT (Nhóm 5)" : (grp == 0 ? "Chỉ xem (Nhóm 0)" : `Tổ ${grp}`);
                     setSafeText('menuUserRole', roleName);
                     
-                    // [LOGIC UI MỚI] Chỉ Group 5 là Vua
+                    // [LOGIC UI] Chỉ Group 5 là Vua
                     const isSuperAdmin = (grp == 5) || (currentUser.email === ADMIN_EMAIL);
                     
                     if (isSuperAdmin) {
@@ -228,17 +240,22 @@
                 allLinesData = snap.val() || {};
                 filterLines(); 
                 renderDashboard();
-                if (currentLineId && allLinesData[currentLineId]) renderMobileList(allLinesData[currentLineId]);
-                else if (!currentLineId) {
+                if (currentLineId && allLinesData[currentLineId]) {
+                    renderMobileList(allLinesData[currentLineId]);
+                } else if (!currentLineId) {
                     const el = document.getElementById('mobileRecordList');
                     if(el) el.innerHTML = '<div class="text-center mt-5 text-muted small fst-italic">Vui lòng chọn tuyến dây để xem</div>';
                 }
                 showLoading(false);
                 document.getElementById('mainApp').classList.remove('d-none');
+            }, (error) => {
+                showLoading(false);
+                alert("Lỗi tải dữ liệu: " + error.code);
+                document.getElementById('mainApp').classList.remove('d-none');
             });
         }
 
-        // [LOGIC PERMISSION V4.5]
+        // --- PERMISSION V4.6 ---
         function canEditLine() {
             if (currentUserStatus.is_blocked) return false;
             
@@ -270,6 +287,7 @@
             return false;
         }
 
+        // --- ASSIGNMENT [FIXED V4.6] ---
         function openAssignModal() {
             if(!currentLineId) return alert("Chọn tuyến trước!");
             
@@ -281,10 +299,11 @@
             select.innerHTML = '<option value="">-- Chưa gán --</option>';
             const line = allLinesData[currentLineId];
             
+            // Hiện tất cả từ nhóm 1-5
             Object.entries(allUsersData).forEach(([k, u]) => {
                 const uGrp = u.group !== undefined ? u.group : 0;
-                // Chỉ hiện những người có nhóm 1-4 để gán làm tổ trưởng
-                if (uGrp >= 1 && uGrp <= 4) {
+                // [FIXED] Cho phép chọn Nhóm 1-4 VÀ Nhóm 5 (Để lãnh đạo tự gán cho mình nếu cần)
+                if (uGrp >= 1 && uGrp <= 5) {
                     const isSelected = line.manager_email === u.email ? 'selected' : '';
                     select.innerHTML += `<option value="${u.email}" ${isSelected}>[Nhóm ${uGrp}] ${u.real_name || u.email}</option>`;
                 }
@@ -300,7 +319,7 @@
             });
         }
 
-        // ... (CÁC HÀM KHÁC GIỮ NGUYÊN) ...
+        // ... (CÁC HÀM CÒN LẠI GIỮ NGUYÊN) ...
         let videoStream = null; let facingMode = 'environment'; 
         async function startCamera() { const video = document.getElementById('cameraVideo'); if(videoStream) videoStream.getTracks().forEach(t => t.stop()); try { videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } } }); video.srcObject = videoStream; document.getElementById('cameraOverlay').style.display = 'flex'; setSafeText('camStatus', "Đã bật Camera"); } catch (err) { alert("Lỗi Camera: " + err); document.getElementById('cameraOverlay').style.display = 'none'; } }
         function switchCamera() { facingMode = (facingMode === 'environment') ? 'user' : 'environment'; startCamera(); }
@@ -336,18 +355,15 @@
                 const mgrKey = mgrEmail.replace(/\./g, '_');
                 const mgrData = allUsersData[mgrKey];
                 const mgrGroup = mgrData && mgrData.group !== undefined ? mgrData.group : '?';
-                permMsg.innerHTML = `<i class="fas fa-user-shield"></i> Quản lý chính: <b>${getRealName(mgrEmail)} (Nhóm ${mgrGroup})</b>`;
-                permMsg.classList.remove('alert-warning');
-                permMsg.classList.add('alert-info');
+                document.getElementById('lblManagerName').innerText = `${getRealName(mgrEmail)} (Nhóm ${mgrGroup})`;
+                document.getElementById('managerInfo').classList.remove('d-none');
             } else {
-                permMsg.innerHTML = `<i class="fas fa-exclamation-circle"></i> Chưa phân công người quản lý`;
-                permMsg.classList.remove('alert-info');
-                permMsg.classList.add('alert-warning');
+                document.getElementById('lblManagerName').innerText = "Chưa gán";
+                document.getElementById('managerInfo').classList.remove('d-none');
             }
-            permMsg.classList.remove('d-none');
 
-            if(allowEdit) { container.classList.remove('readonly-mode'); } 
-            else { container.classList.add('readonly-mode'); }
+            if(allowEdit) { container.classList.remove('readonly-mode'); permMsg.classList.add('d-none'); } 
+            else { container.classList.add('readonly-mode'); permMsg.classList.remove('d-none'); }
 
             let html = '';
             const renderGroup = (title, items) => {
